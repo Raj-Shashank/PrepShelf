@@ -803,8 +803,15 @@ app.post("/api/admin/password", auth, async (req, res) => {
 /* ============================================================
    FILE UPLOADS
 ============================================================ */
-const PUBLIC_UPLOAD = path.join(__dirname, "public", "uploads");
-const PRIVATE_UPLOAD = path.join(__dirname, "private-uploads");
+const uploadRoot = process.env.VERCEL
+  ? path.join("/tmp", "prepshelf-uploads")
+  : __dirname;
+const PUBLIC_UPLOAD = process.env.VERCEL
+  ? path.join(uploadRoot, "public", "uploads")
+  : path.join(__dirname, "public", "uploads");
+const PRIVATE_UPLOAD = process.env.VERCEL
+  ? path.join(uploadRoot, "private-uploads")
+  : path.join(__dirname, "private-uploads");
 fs.mkdirSync(PUBLIC_UPLOAD, { recursive: true });
 fs.mkdirSync(PRIVATE_UPLOAD, { recursive: true });
 
