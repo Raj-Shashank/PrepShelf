@@ -1808,34 +1808,38 @@ app.get("*", (req, res, next) => {
 });
 
 /* ============================================================
-   START
+  START
 ============================================================ */
-(async function start() {
-  try {
-    console.log("🔌 Connecting to Firestore...");
-    await ensureSeed();
+module.exports = app;
 
-    app.listen(PORT, () => {
-      console.log("");
-      console.log("  🚀  PrepShelf running");
-      console.log("      Site:    http://localhost:" + PORT);
-      console.log("      Admin:   http://localhost:" + PORT + "/admin");
-      console.log(
-        "      Pay:     http://localhost:" +
-          PORT +
-          "/pay.html?id=<material-id>",
-      );
-      console.log("      Pass:    " + ADMIN_PASSWORD);
-      console.log(
-        "      Pay:     " +
-          (PAYMENTS_ENABLED
-            ? "💳 Razorpay ENABLED"
-            : "❌ Razorpay not configured"),
-      );
-      console.log("");
-    });
-  } catch (e) {
-    console.error("❌ Startup failed:", e.message);
-    process.exit(1);
-  }
-})();
+if (require.main === module) {
+  (async function start() {
+    try {
+      console.log("🔌 Connecting to Firestore...");
+      await ensureSeed();
+
+      app.listen(PORT, () => {
+        console.log("");
+        console.log("  🚀  PrepShelf running");
+        console.log("      Site:    http://localhost:" + PORT);
+        console.log("      Admin:   http://localhost:" + PORT + "/admin");
+        console.log(
+          "      Pay:     http://localhost:" +
+            PORT +
+            "/pay.html?id=<material-id>",
+        );
+        console.log("      Pass:    " + ADMIN_PASSWORD);
+        console.log(
+          "      Pay:     " +
+            (PAYMENTS_ENABLED
+              ? "💳 Razorpay ENABLED"
+              : "❌ Razorpay not configured"),
+        );
+        console.log("");
+      });
+    } catch (e) {
+      console.error("❌ Startup failed:", e.message);
+      process.exit(1);
+    }
+  })();
+}
