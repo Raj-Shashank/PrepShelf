@@ -1,0 +1,449 @@
+{
+  "exams": [
+    {
+      "id": "ssc",
+      "name": "SSC",
+      "short": "SSC",
+      "hue": 222,
+      "group": "Government exams",
+      "status": "live",
+      "blurb": "CGL, CHSL, MTS and more",
+      "order": 1
+    },
+    {
+      "id": "banking",
+      "name": "Banking",
+      "short": "BK",
+      "hue": 158,
+      "group": "Government exams",
+      "status": "live",
+      "blurb": "IBPS, SBI and RBI exams",
+      "order": 2
+    },
+    {
+      "id": "railway",
+      "name": "Railway",
+      "short": "RRB",
+      "hue": 24,
+      "group": "Government exams",
+      "status": "live",
+      "blurb": "NTPC, Group D and ALP",
+      "order": 3
+    },
+    {
+      "id": "upsc",
+      "name": "UPSC",
+      "short": "UP",
+      "hue": 272,
+      "group": "Government exams",
+      "status": "live",
+      "blurb": "Prelims, Mains and strategy",
+      "order": 4
+    },
+    {
+      "id": "defence",
+      "name": "Defence",
+      "short": "DEF",
+      "hue": 96,
+      "group": "Government exams",
+      "status": "live",
+      "blurb": "NDA, CDS and Agniveer",
+      "order": 5
+    },
+    {
+      "id": "statepsc",
+      "name": "State PSC",
+      "short": "PSC",
+      "hue": 44,
+      "group": "Government exams",
+      "status": "live",
+      "blurb": "State civil services",
+      "order": 8
+    },
+    {
+      "id": "data-analyst",
+      "name": "Data Analyst",
+      "short": "DA",
+      "hue": 190,
+      "group": "Career & skills",
+      "status": "live",
+      "blurb": "Excel, SQL, Power BI and Python",
+      "order": 9
+    },
+    {
+      "id": "software",
+      "name": "Software Developer",
+      "short": "DEV",
+      "hue": 250,
+      "group": "Career & skills",
+      "status": "soon",
+      "blurb": "DSA, web basics and interviews",
+      "order": 10
+    },
+    {
+      "id": "digital-marketing",
+      "name": "Digital Marketing",
+      "short": "DM",
+      "hue": 320,
+      "group": "Career & skills",
+      "status": "soon",
+      "blurb": "SEO, ads and analytics",
+      "order": 11
+    },
+    {
+      "id": "accounts",
+      "name": "Accounts & Finance",
+      "short": "FIN",
+      "hue": 150,
+      "group": "Career & skills",
+      "status": "soon",
+      "blurb": "Tally, GST and accounting",
+      "order": 12
+    },
+    {
+      "id": "data-science",
+      "name": "Data Science",
+      "short": "DS",
+      "hue": 280,
+      "group": "Career & skills",
+      "status": "soon",
+      "blurb": "Statistics, ML and projects",
+      "order": 13
+    },
+    {
+      "id": "cloud",
+      "name": "Cloud & DevOps",
+      "short": "CLD",
+      "hue": 205,
+      "group": "Career & skills",
+      "status": "soon",
+      "blurb": "AWS, Linux and CI/CD",
+      "order": 14
+    }
+  ],
+  "materials": [
+    {
+      "id": "ssc-cgl-quant-notes",
+      "title": "SSC CGL Quantitative Aptitude: Complete Notes",
+      "exam": "ssc",
+      "type": "Notes PDF",
+      "language": "Bilingual",
+      "pages": 240,
+      "price": 0,
+      "mrp": 399,
+      "featured": true,
+      "description": "Every quant topic in the CGL syllabus with worked examples, shortcut methods and a practice set at the end of each chapter.",
+      "includes": "Chapter-wise theory and formulas\nShortcut methods for speed\n1,200+ practice questions with answers",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-17T04:27:22.224Z",
+      "thumbnailUrl": "",
+      "razorpay": true,
+      "status": "published",
+      "publishAt": "",
+      "expiresAt": "",
+      "updatedAt": "2026-09-20T06:01:31.415Z",
+      "privateFileUrl": ""
+    },
+    {
+      "id": "ssc-cgl-pyq",
+      "title": "SSC CGL Previous Year Papers with Solutions",
+      "exam": "ssc",
+      "type": "Previous Year Papers",
+      "language": "English",
+      "pages": 620,
+      "price": 149,
+      "mrp": 299,
+      "featured": true,
+      "description": "Solved papers from recent exam cycles, arranged by subject so you can practise one section at a time.",
+      "includes": "Full solutions for every question\nSubject-wise and year-wise index\nDifficulty and trend notes",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-11T04:27:22.224Z"
+    },
+    {
+      "id": "ibps-po-ebook",
+      "title": "IBPS PO Prelims + Mains Master E-book",
+      "exam": "banking",
+      "type": "E-book",
+      "language": "English",
+      "pages": 480,
+      "price": 299,
+      "mrp": 599,
+      "featured": true,
+      "description": "One book covering reasoning, quant, English and banking awareness for both stages of the PO exam.",
+      "includes": "Prelims and Mains in one book\nBanking awareness capsule\nSectional practice sets",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-15T04:27:22.224Z"
+    },
+    {
+      "id": "banking-reasoning-free",
+      "title": "Banking Reasoning Shortcuts (Free)",
+      "exam": "banking",
+      "type": "Notes PDF",
+      "language": "English",
+      "pages": 60,
+      "price": 0,
+      "mrp": 0,
+      "featured": false,
+      "description": "A short free pack covering seating arrangement, puzzles and syllogism tricks. A good way to try the material.",
+      "includes": "Seating arrangement patterns\nPuzzle solving steps\nSyllogism Venn method",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-08T04:27:22.224Z"
+    },
+    {
+      "id": "rrb-ntpc-gs",
+      "title": "RRB NTPC General Awareness Notes",
+      "exam": "railway",
+      "type": "Notes PDF",
+      "language": "Hindi",
+      "pages": 180,
+      "price": 129,
+      "mrp": 249,
+      "featured": true,
+      "description": "History, geography, polity, science and current affairs written in short, revision-friendly points.",
+      "includes": "Topic-wise short notes\nStatic GK tables\nLast-year question pattern",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-13T04:27:22.224Z"
+    },
+    {
+      "id": "rrb-group-d-mock",
+      "title": "RRB Group D: 25 Full Mock Tests",
+      "exam": "railway",
+      "type": "Mock Test",
+      "language": "Hindi",
+      "pages": 300,
+      "price": 199,
+      "mrp": 399,
+      "featured": false,
+      "description": "Timed mock tests that follow the latest paper pattern, with answer keys and explanations.",
+      "includes": "25 full-length tests\nAnswer key with explanations\nTopic-wise score sheet",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-06T04:27:22.224Z"
+    },
+    {
+      "id": "upsc-polity",
+      "title": "UPSC Prelims: Indian Polity Notes",
+      "exam": "upsc",
+      "type": "Notes PDF",
+      "language": "English",
+      "pages": 310,
+      "price": 249,
+      "mrp": 499,
+      "featured": true,
+      "description": "The whole polity syllabus in structured notes, with article numbers, amendments and quick-revision tables.",
+      "includes": "Article and amendment tables\nMap of constitutional bodies\nPrelims-style MCQs per chapter",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-16T04:27:22.224Z"
+    },
+    {
+      "id": "upsc-strategy-free",
+      "title": "UPSC Syllabus and Month-wise Strategy (Free)",
+      "exam": "upsc",
+      "type": "Syllabus & Strategy",
+      "language": "English",
+      "pages": 40,
+      "price": 0,
+      "mrp": 0,
+      "featured": false,
+      "description": "A clear breakdown of the Prelims and Mains syllabus with a month-by-month study plan.",
+      "includes": "Syllabus at a glance\n12-month study plan\nBooklist by subject",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-08-31T04:27:22.224Z"
+    },
+    {
+      "id": "nda-maths",
+      "title": "NDA Mathematics: Complete E-book",
+      "exam": "defence",
+      "type": "E-book",
+      "language": "English",
+      "pages": 350,
+      "price": 199,
+      "mrp": 349,
+      "featured": false,
+      "description": "Algebra, trigonometry, calculus, geometry and statistics explained step by step for the NDA written exam.",
+      "includes": "Concept notes and solved examples\nPrevious year question analysis\nChapter tests",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-02T04:27:22.224Z"
+    },
+    {
+      "id": "ctet-child-dev",
+      "title": "CTET Child Development and Pedagogy Notes",
+      "exam": "teaching",
+      "type": "Notes PDF",
+      "language": "Hindi",
+      "pages": 140,
+      "price": 99,
+      "mrp": 199,
+      "featured": false,
+      "description": "Theories, thinkers and teaching methods in simple language, with the questions that come up most often.",
+      "includes": "Theorist and theory chart\nInclusive education summary\nPractice questions",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-09T04:27:22.224Z"
+    },
+    {
+      "id": "police-constable-gk",
+      "title": "Police Constable Exam: GK and Reasoning Pack",
+      "exam": "police",
+      "type": "Notes PDF",
+      "language": "Hindi",
+      "pages": 220,
+      "price": 149,
+      "mrp": 299,
+      "featured": false,
+      "description": "General knowledge, reasoning and numerical ability notes matched to state constable exam patterns.",
+      "includes": "GK short notes\nReasoning practice\nNumerical ability basics",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-04T04:27:22.224Z"
+    },
+    {
+      "id": "mppsc-prelims-gs",
+      "title": "State PSC Prelims: General Studies Notes",
+      "exam": "statepsc",
+      "type": "Notes PDF",
+      "language": "Hindi",
+      "pages": 290,
+      "price": 199,
+      "mrp": 399,
+      "featured": false,
+      "description": "General studies notes with a state-level focus on history, geography, economy and governance.",
+      "includes": "State-focused topics\nCurrent affairs section\nPrevious year questions",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-08-29T04:27:22.224Z"
+    },
+    {
+      "id": "data-analyst-sql",
+      "title": "SQL for Data Analysts: Notes with 150 Practice Queries",
+      "exam": "data-analyst",
+      "type": "Notes PDF",
+      "language": "English",
+      "pages": 170,
+      "price": 199,
+      "mrp": 399,
+      "featured": true,
+      "description": "SELECT, joins, grouping and window functions explained step by step with business examples.",
+      "includes": "Query patterns explained\n150 practice queries with answers\nInterview question bank",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-18T04:27:22.224Z"
+    },
+    {
+      "id": "excel-analytics-free",
+      "title": "Excel for Analytics: Starter Guide (Free)",
+      "exam": "data-analyst",
+      "type": "Notes PDF",
+      "language": "English",
+      "pages": 50,
+      "price": 0,
+      "mrp": 0,
+      "featured": true,
+      "description": "Pivot tables, lookups and charts explained with simple datasets. A good first step into data analysis.",
+      "includes": "Pivot tables in 30 minutes\nXLOOKUP and IF patterns\nClean-data checklist",
+      "fileUrl": "",
+      "buyUrl": "",
+      "createdAt": "2026-09-19T04:27:22.224Z"
+    }
+  ],
+  "leads": [],
+  "settings": {
+    "siteName": "PrepShelf",
+    "tagline": "Study material for government exams and career prep.",
+    "whatsapp": "",
+    "telegram": "",
+    "email": "",
+    "adminPassword": "admin123",
+    "parent": {
+      "name": "TEMPLIFYY",
+      "url": ""
+    },
+    "bundle": {
+      "enabled": true,
+      "title": "All-Exam Pass",
+      "subtitle": "every exam, one payment",
+      "price": 980,
+      "mrp": 2499,
+      "url": "",
+      "points": "Every e-book and notes PDF on the site\nNew material added at no extra cost\nPriority help on WhatsApp",
+      "buttonLabel": "Get the pass"
+    },
+    "ads": {
+      "enabled": false,
+      "clientId": "",
+      "placeholders": false,
+      "slots": {
+        "home-mid": "",
+        "list-top": "",
+        "detail-side": "",
+        "detail-bottom": ""
+      }
+    },
+    "home": {
+      "tracksTitle": "Choose your path",
+      "tracksText": "Pick an exam or career track to open its study material.",
+      "featuredTitle": "Popular study material",
+      "featuredText": "Chosen by students preparing right now.",
+      "leadTitle": "Hear first when new material goes live",
+      "leadText": "Leave your email or WhatsApp number. We will only send new material and track updates.",
+      "faqTitle": "Questions students ask",
+      "faq": [
+        {
+          "q": "Is the study material free?",
+          "a": "Some packs are free and others are paid. Each pack page shows the price before you decide, and free packs can be opened straight away."
+        },
+        {
+          "q": "What format are the notes and e-books in?",
+          "a": "PDF. They open on any phone, tablet or computer without a special app."
+        },
+        {
+          "q": "Which exams and careers do you cover?",
+          "a": "Government exams such as SSC, Banking, Railway and UPSC, plus career tracks like Data Analyst. Tracks that are not ready yet are marked Coming soon."
+        },
+        {
+          "q": "Will you add more than government exams?",
+          "a": "Yes. Career tracks such as software, marketing and finance are next, followed by mock tests and learner accounts."
+        }
+      ],
+      "show": {
+        "tracks": true,
+        "featured": true,
+        "bundle": true,
+        "lead": false,
+        "faq": true
+      }
+    },
+    "materialsPage": {
+      "title": "Study material",
+      "text": "E-books, notes, previous year papers and mock tests. Filter by exam, type or price."
+    },
+    "razorpay": {
+      "enabled": false,
+      "keyId": ""
+    }
+  },
+  "coupons": [
+    {
+      "code": "WELCOME10",
+      "type": "percent",
+      "value": 10,
+      "maxDiscount": 200,
+      "minOrder": 99,
+      "maxUses": 1000,
+      "expiresAt": "2026-09-21T06:00:00.000Z",
+      "active": true,
+      "id": "welcome10",
+      "uses": 0,
+      "updatedAt": "2026-09-20T06:00:17.759Z",
+      "createdAt": "2026-09-20T06:00:17.759Z"
+    }
+  ]
+}

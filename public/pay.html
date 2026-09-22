@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title id="page-title">Checkout | PrepShelf</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+      :root {
+        --ink: #16233b;
+        --muted: #5a667a;
+        --line: #e4e8ee;
+        --paper: #f6f7f9;
+        --blue: #1e45d6;
+        --blue-dark: #1533a8;
+        --blue-tint: #eef2fe;
+        --green: #11794f;
+        --green-tint: #e6f5ee;
+        --red: #c2372b;
+        --red-tint: #fdecea;
+        --amber: #f2a20c;
+        --amber-tint: #fff4dc;
+        --head: "Plus Jakarta Sans", system-ui, sans-serif;
+        --body: "Inter", system-ui, sans-serif;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font: 16px/1.55 var(--body);
+        color: var(--ink);
+        background: var(--paper);
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--head);
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+      }
+      :focus-visible {
+        outline: 3px solid #8fa6f5;
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        padding: 14px 0;
+      }
+      .top .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font: 700 1.05rem var(--head);
+      }
+      .logo-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
+        background: var(--blue);
+        color: #fff;
+        display: grid;
+        place-items: center;
+      }
+      .top .back {
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .top .back:hover {
+        color: var(--blue);
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 80px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1.05fr 0.95fr;
+        gap: 32px;
+        align-items: start;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 24px;
+      }
+      .card + .card {
+        margin-top: 16px;
+      }
+      .card h2 {
+        font-size: 1.05rem;
+        margin-bottom: 14px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+      .field > label {
+        font-weight: 600;
+        font-size: 0.88rem;
+      }
+      .hint {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+      .input {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1.5px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        font-family: inherit;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+      .input:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px var(--blue-tint);
+      }
+      .input.err {
+        border-color: var(--red);
+        box-shadow: 0 0 0 3px var(--red-tint);
+      }
+      .err-msg {
+        color: var(--red);
+        font-size: 0.8rem;
+        margin-top: 2px;
+        display: none;
+      }
+      .err-msg.show {
+        display: block;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: 10px;
+        border: 1.5px solid transparent;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: inherit;
+        text-decoration: none;
+        white-space: nowrap;
+        background: none;
+      }
+      .btn-primary {
+        background: var(--blue);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: var(--blue-dark);
+      }
+      .btn-primary:disabled {
+        background: #b6c0d6;
+        cursor: not-allowed;
+      }
+      .btn-ghost {
+        background: #fff;
+        border-color: var(--line);
+      }
+      .btn-ghost:hover {
+        border-color: var(--ink);
+      }
+      .btn-block {
+        width: 100%;
+      }
+      .prod {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .prod-cover {
+        flex: none;
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-family: var(--head);
+        font-weight: 800;
+        font-size: 1.3rem;
+        background: var(--tint);
+        color: var(--tone);
+      }
+      .prod-title {
+        font: 700 1.05rem/1.3 var(--head);
+        margin-bottom: 4px;
+      }
+      .prod-meta {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        font-size: 0.95rem;
+      }
+      .row + .row {
+        border-top: 1px solid var(--line);
+      }
+      .row.total {
+        font-size: 1.15rem;
+        font-weight: 700;
+        padding-top: 14px;
+        margin-top: 4px;
+        border-top: 2px solid var(--ink);
+      }
+      .row .price-final {
+        font-family: var(--head);
+        font-weight: 800;
+        font-size: 1.4rem;
+      }
+      .row .price-final.free {
+        color: var(--green);
+      }
+      .row .discount {
+        color: var(--green);
+      }
+      .coupon-row {
+        display: flex;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .coupon-row .input {
+        flex: 1;
+        text-transform: uppercase;
+      }
+      .coupon-msg {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        padding: 8px 12px;
+        border-radius: 8px;
+        display: none;
+      }
+      .coupon-msg.show {
+        display: block;
+      }
+      .coupon-msg.ok {
+        background: var(--green-tint);
+        color: var(--green);
+      }
+      .coupon-msg.bad {
+        background: var(--red-tint);
+        color: var(--red);
+      }
+      .coupon-applied {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--green-tint);
+        border-radius: 8px;
+        font-size: 0.88rem;
+        margin-top: 8px;
+        color: var(--green);
+        font-weight: 600;
+      }
+      .coupon-applied button {
+        background: none;
+        border: 0;
+        color: var(--red);
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 0.85rem;
+        margin-left: auto;
+      }
+      .spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        display: inline-block;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .success-wrap {
+        max-width: 560px;
+        margin: 60px auto;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        box-shadow: 0 24px 60px -30px rgba(22, 35, 59, 0.3);
+      }
+      .success-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--green-tint);
+        color: var(--green);
+        display: grid;
+        place-items: center;
+        margin: 0 auto 20px;
+        font-size: 32px;
+      }
+      .success-wrap h1 {
+        font-size: 1.6rem;
+        margin-bottom: 10px;
+      }
+      .success-wrap p {
+        color: var(--muted);
+        margin-bottom: 24px;
+      }
+      .dl-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 15px 28px;
+        border-radius: 12px;
+        background: var(--blue);
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.02rem;
+        text-decoration: none;
+      }
+      .dl-btn:hover {
+        background: var(--blue-dark);
+      }
+      .tiny-note {
+        margin-top: 16px;
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      .alert {
+        background: var(--amber-tint);
+        border: 1px solid #f0dba8;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 0.92rem;
+        margin-bottom: 18px;
+      }
+      .alert-err {
+        background: var(--red-tint);
+        border-color: #f5c6c0;
+        color: var(--red);
+      }
+      .center {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--muted);
+      }
+      @media (max-width: 820px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap">
+        <a class="logo" href="/"
+          ><span class="logo-mark">📚</span
+          ><span id="siteName">PrepShelf</span></a
+        >
+        <a class="back" href="javascript:history.back()">← Back</a>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="center">
+        <div
+          class="spinner"
+          style="
+            border-color: var(--line);
+            border-top-color: var(--blue);
+            width: 24px;
+            height: 24px;
+          "
+        ></div>
+        <p style="margin-top: 12px">Loading…</p>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        "use strict";
+
+        const $ = (s) => document.querySelector(s);
+        const esc = (s) =>
+          String(s == null ? "" : s).replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[c],
+          );
+        const fmtINR = (n) => "\u20B9" + Number(n || 0).toLocaleString("en-IN");
+        const tint = (h) =>
+          `--tint:hsl(${h || 220} 65% 94%);--tone:hsl(${h || 220} 55% 28%)`;
+
+        const state = {
+          material: null,
+          exam: null,
+          settings: null,
+          paymentsEnabled: false,
+          isFree: false,
+          coupon: null,
+          finalPrice: 0,
+          discount: 0,
+          paying: false,
+        };
+
+        function getIdFromUrl() {
+          const p = new URLSearchParams(location.search);
+          return p.get("id") || "";
+        }
+
+        function toast(msg) {
+          const t = document.createElement("div");
+          t.textContent = msg;
+          t.style.cssText =
+            "position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#16233b;color:#fff;padding:12px 20px;border-radius:10px;opacity:0;transition:.2s;z-index:999;max-width:90vw;font-weight:500";
+          document.body.appendChild(t);
+          requestAnimationFrame(() => {
+            t.style.opacity = "1";
+            t.style.transform = "translate(-50%,0)";
+          });
+          setTimeout(() => {
+            t.style.opacity = "0";
+            t.style.transform = "translate(-50%,20px)";
+            setTimeout(() => t.remove(), 300);
+          }, 2800);
+        }
+
+        async function apiGet(path) {
+          const r = await fetch(path);
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        }
+        async function apiPost(path, body) {
+          const r = await fetch(path, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await r.json().catch(() => ({}));
+          if (!r.ok) throw new Error(data.error || "Request failed");
+          return data;
+        }
+
+        async function init() {
+          const id = getIdFromUrl();
+          if (!id)
+            return renderError(
+              "No product selected. Please open this page from a book.",
+            );
+
+          try {
+            const [settings, material] = await Promise.all([
+              apiGet("/api/settings"),
+              apiGet("/api/material/" + encodeURIComponent(id)),
+            ]);
+            state.settings = settings || {};
+            state.material = material;
+            state.paymentsEnabled = !!settings.paymentsEnabled;
+            state.isFree = !(material.price > 0);
+
+            if (material.exam) {
+              try {
+                const exams = await apiGet("/api/exams");
+                state.exam = exams.find((e) => e.id === material.exam) || null;
+              } catch (e) {}
+            }
+
+            document.getElementById("siteName").textContent =
+              settings.siteName || "PrepShelf";
+
+            if (state.isFree) {
+              document.title =
+                "Download — " +
+                material.title +
+                " | " +
+                (settings.siteName || "PrepShelf");
+              state.finalPrice = 0;
+              renderFreeCheckout();
+            } else {
+              document.title =
+                "Checkout — " +
+                material.title +
+                " | " +
+                (settings.siteName || "PrepShelf");
+              state.finalPrice = material.price;
+              renderPaidCheckout();
+            }
+          } catch (e) {
+            console.error(e);
+            renderError("Could not load this product. Please try again.");
+          }
+        }
+
+        function renderError(msg) {
+          $("#main").innerHTML =
+            '<div class="center"><div class="alert alert-err" style="display:inline-block">' +
+            esc(msg) +
+            '</div><p style="margin-top:20px"><a class="btn btn-ghost" href="/">← Back to home</a></p></div>';
+        }
+
+        /* ---------- Customer form (shared) ---------- */
+        function formHtml() {
+          return `
+      <div class="card">
+        <h2>Your details</h2>
+        <form id="pay-form" novalidate>
+          <div class="field">
+            <label for="f-name">Full name</label>
+            <input class="input" id="f-name" name="name" autocomplete="name" placeholder="e.g. Priya Sharma" required>
+            <small class="err-msg" data-err="name"></small>
+          </div>
+          <div class="field">
+            <label for="f-email">Email address</label>
+            <input class="input" id="f-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+            <small class="hint">We'll email your receipt and download link.</small>
+            <small class="err-msg" data-err="email"></small>
+          </div>
+          <div class="field">
+            <label for="f-phone">Phone number</label>
+            <input class="input" id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="numeric" placeholder="9876543210" required>
+            <small class="hint">10–15 digits. Include country code if outside India.</small>
+            <small class="err-msg" data-err="phone"></small>
+          </div>
+        </form>
+      </div>`;
+        }
+
+        function productHtml() {
+          const m = state.material,
+            e = state.exam;
+          return `
+      <div class="prod">
+        <div class="prod-cover" style="${tint(e ? e.hue : 220)}">${esc(e ? e.short : "PDF")}</div>
+        <div>
+          <div class="prod-title">${esc(m.title)}</div>
+          <div class="prod-meta">${esc(m.type)} · ${esc(m.language)}${m.pages ? " · " + m.pages + " pages" : ""}</div>
+        </div>
+      </div>`;
+        }
+
+        /* ---------- FREE flow ---------- */
+        function renderFreeCheckout() {
+          $("#main").innerHTML = `
+      <div class="wrap">
+        <div class="grid">
+          <div>${formHtml()}</div>
+          <div>
+            <div class="card">
+              <h2>Order summary</h2>
+              ${productHtml()}
+              <div style="margin-top:18px">
+                <div class="row"><span>Price</span><span class="discount" style="font-weight:700">Free</span></div>
+                <div class="row total"><span>Total</span><span class="price-final free">Free</span></div>
+              </div>
+              <button class="btn btn-primary btn-block" id="download-btn" style="margin-top:18px">
+                <span id="pay-btn-label">Download now</span>
+              </button>
+              <p class="tiny-note">Your download will start automatically. No payment required.</p>
+            </div>
+          </div>
+        </div>
+      </div>`;
+          $("#download-btn").addEventListener("click", submitFree);
+        }
+
+        async function submitFree() {
+          if (state.paying) return;
+          const customer = validateForm();
+          if (!customer) return;
+          state.paying = true;
+          const btn = $("#download-btn");
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner"></span> Preparing download…';
+
+          try {
+            const r = await apiPost("/api/free/register", {
+              materialId: state.material.id,
+              customer,
+            });
+            if (r.ok && r.downloadUrl) {
+              renderSuccess(r.downloadUrl, null);
+              triggerDownload(r.downloadUrl);
+            } else {
+              throw new Error("Could not prepare download");
+            }
+          } catch (e) {
+            console.error(e);
+            state.paying = false;
+            btn.disabled = false;
+            btn.innerHTML = "Download now";
+            toast(e.message || "Could not start download");
+          }
+        }
+
+        /* ---------- PAID flow ---------- */
+        function renderPaidCheckout() {
+          $("#main").innerHTML = `
+      <div class="wrap">
+        <div class="grid">
+          <div>
+            ${formHtml()}
+            <div class="card">
+              <h2>Have a coupon?</h2>
+              <div id="coupon-area">
+                <div class="coupon-row">
+                  <input class="input" id="coupon-input" placeholder="Enter code" maxlength="24" style="text-transform:uppercase">
+                  <button class="btn btn-ghost" id="apply-coupon" type="button">Apply</button>
+                </div>
+                <div class="coupon-msg" id="coupon-msg"></div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <h2>Order summary</h2>
+              ${productHtml()}
+              <div style="margin-top:18px">
+                <div class="row"><span>Price</span><span>${fmtINR(state.material.price)}</span></div>
+                <div class="row" id="row-discount" style="display:none"><span>Coupon discount</span><span class="discount" id="discount-amt">—</span></div>
+                <div class="row total"><span>Total</span><span class="price-final" id="final-price">${fmtINR(state.finalPrice)}</span></div>
+              </div>
+              ${state.paymentsEnabled ? "" : '<div class="alert alert-err" style="margin-top:16px"><b>Payments not configured.</b> Ask the site owner to add Razorpay keys in .env.</div>'}
+              <button class="btn btn-primary btn-block" id="pay-btn" style="margin-top:18px" ${state.paymentsEnabled ? "" : "disabled"}>
+                <span id="pay-btn-label">Pay ${fmtINR(state.finalPrice)}</span>
+              </button>
+              <p class="tiny-note">You will be redirected to Razorpay's secure checkout. We never see your card details.</p>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+          $("#apply-coupon").addEventListener("click", applyCoupon);
+          $("#coupon-input").addEventListener("input", () => {
+            $("#coupon-input").value = $("#coupon-input").value.toUpperCase();
+          });
+          $("#coupon-input").addEventListener("keypress", (ev) => {
+            if (ev.key === "Enter") {
+              ev.preventDefault();
+              applyCoupon();
+            }
+          });
+          $("#pay-btn").addEventListener("click", submitPayment);
+        }
+
+        async function applyCoupon() {
+          const code = $("#coupon-input").value.trim().toUpperCase();
+          const msg = $("#coupon-msg");
+          if (!code) {
+            msg.className = "coupon-msg bad show";
+            msg.textContent = "Please enter a coupon code";
+            return;
+          }
+          $("#apply-coupon").disabled = true;
+          msg.className = "coupon-msg";
+          msg.textContent = "";
+
+          try {
+            const r = await apiPost("/api/coupon/validate", {
+              code,
+              materialId: state.material.id,
+            });
+            if (!r.valid) {
+              msg.className = "coupon-msg bad show";
+              msg.textContent = r.message || "Invalid coupon";
+              state.coupon = null;
+              state.discount = 0;
+              state.finalPrice = state.material.price;
+              updatePrices();
+              return;
+            }
+            state.coupon = r.code;
+            state.discount = r.discount;
+            state.finalPrice = r.finalPrice;
+            updatePrices();
+            $("#coupon-area").innerHTML =
+              '<div class="coupon-applied">✓ ' +
+              esc(r.code) +
+              " applied — " +
+              esc(r.message) +
+              '<button type="button" id="remove-coupon">Remove</button></div>';
+            $("#remove-coupon").addEventListener("click", removeCoupon);
+          } catch (e) {
+            msg.className = "coupon-msg bad show";
+            msg.textContent = e.message || "Could not apply coupon";
+          } finally {
+            $("#apply-coupon").disabled = false;
+          }
+        }
+
+        function removeCoupon() {
+          state.coupon = null;
+          state.discount = 0;
+          state.finalPrice = state.material.price;
+          updatePrices();
+          $("#coupon-area").innerHTML =
+            '<div class="coupon-row"><input class="input" id="coupon-input" placeholder="Enter code" maxlength="24" style="text-transform:uppercase"><button class="btn btn-ghost" id="apply-coupon" type="button">Apply</button></div><div class="coupon-msg" id="coupon-msg"></div>';
+          $("#apply-coupon").addEventListener("click", applyCoupon);
+          $("#coupon-input").addEventListener("input", () => {
+            $("#coupon-input").value = $("#coupon-input").value.toUpperCase();
+          });
+          $("#coupon-input").addEventListener("keypress", (ev) => {
+            if (ev.key === "Enter") {
+              ev.preventDefault();
+              applyCoupon();
+            }
+          });
+        }
+
+        function updatePrices() {
+          const fp = $("#final-price");
+          const rd = $("#row-discount");
+          const da = $("#discount-amt");
+          const lbl = $("#pay-btn-label");
+          if (fp) fp.textContent = fmtINR(state.finalPrice);
+          if (rd) rd.style.display = state.discount > 0 ? "flex" : "none";
+          if (da) da.textContent = "− " + fmtINR(state.discount);
+          if (lbl) lbl.textContent = "Pay " + fmtINR(state.finalPrice);
+        }
+
+        async function submitPayment() {
+          if (state.paying) return;
+          const customer = validateForm();
+          if (!customer) return;
+          if (!state.paymentsEnabled) return toast("Payments not configured");
+
+          state.paying = true;
+          const btn = $("#pay-btn");
+          btn.disabled = true;
+          btn.innerHTML = '<span class="spinner"></span> Opening checkout…';
+
+          try {
+            const order = await apiPost("/api/pay/order", {
+              materialId: state.material.id,
+              customer,
+              couponCode: state.coupon || "",
+            });
+
+            const opts = {
+              key: order.keyId,
+              amount: order.amount,
+              currency: order.currency,
+              name: state.settings.siteName || "PrepShelf",
+              description: state.material.title,
+              order_id: order.orderId,
+              prefill: {
+                name: customer.name,
+                email: customer.email,
+                contact: customer.phone,
+              },
+              theme: { color: "#1e45d6" },
+              modal: {
+                ondismiss: function () {
+                  state.paying = false;
+                  btn.disabled = false;
+                  btn.innerHTML = "Pay " + fmtINR(state.finalPrice);
+                  toast("Payment cancelled");
+                },
+              },
+              handler: async function (response) {
+                btn.innerHTML = '<span class="spinner"></span> Verifying…';
+                try {
+                  const v = await apiPost("/api/pay/verify", {
+                    orderId: response.razorpay_order_id,
+                    paymentId: response.razorpay_payment_id,
+                    signature: response.razorpay_signature,
+                  });
+                  if (v.ok && v.downloadUrl) {
+                    renderSuccess(v.downloadUrl, response.razorpay_payment_id);
+                    triggerDownload(v.downloadUrl);
+                  } else {
+                    throw new Error("Verification failed");
+                  }
+                } catch (e) {
+                  console.error(e);
+                  renderError(
+                    "Payment succeeded but verification failed. Contact support with your payment ID: " +
+                      response.razorpay_payment_id,
+                  );
+                }
+              },
+            };
+
+            const rzp = new window.Razorpay(opts);
+            rzp.on("payment.failed", function (resp) {
+              console.error("payment.failed", resp.error);
+              state.paying = false;
+              btn.disabled = false;
+              btn.innerHTML = "Pay " + fmtINR(state.finalPrice);
+              toast(
+                "Payment failed. " +
+                  (resp.error && resp.error.description
+                    ? resp.error.description
+                    : ""),
+              );
+            });
+            rzp.open();
+          } catch (e) {
+            console.error(e);
+            state.paying = false;
+            btn.disabled = false;
+            btn.innerHTML = "Pay " + fmtINR(state.finalPrice);
+            toast(e.message || "Could not start payment");
+          }
+        }
+
+        /* ---------- Validation ---------- */
+        function validateForm() {
+          const name = $("#f-name").value.trim();
+          const email = $("#f-email").value.trim().toLowerCase();
+          const phone = $("#f-phone").value.trim();
+          const errs = {};
+
+          if (name.length < 2 || name.length > 60)
+            errs.name = "Please enter your full name (2–60 characters)";
+          else if (!/^[A-Za-z\s.'-]+$/.test(name))
+            errs.name = "Only letters, spaces, and . ' - allowed";
+
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+            errs.email = "Please enter a valid email address";
+          else if (email.length > 120) errs.email = "Email is too long";
+
+          const digits = phone.replace(/[^\d+]/g, "");
+          const plain = digits.replace(/^\+/, "");
+          if (plain.length < 10 || plain.length > 15)
+            errs.phone = "Phone must be 10–15 digits";
+          else if (!/^\d+$/.test(plain)) errs.phone = "Digits only";
+
+          ["name", "email", "phone"].forEach((k) => {
+            const el = document.querySelector('[data-err="' + k + '"]');
+            const inp = $("#f-" + k);
+            if (errs[k]) {
+              el.textContent = errs[k];
+              el.classList.add("show");
+              inp.classList.add("err");
+            } else {
+              el.textContent = "";
+              el.classList.remove("show");
+              inp.classList.remove("err");
+            }
+          });
+
+          if (Object.keys(errs).length) return null;
+          return { name, email, phone: digits };
+        }
+
+        /* ---------- Auto-download ---------- */
+        function triggerDownload(url) {
+          setTimeout(() => {
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "";
+            a.style.display = "none";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => a.remove(), 1000);
+          }, 700);
+        }
+
+        function renderSuccess(downloadUrl, paymentId) {
+          const isFree = state.isFree;
+          $("#main").innerHTML = `
+      <div class="success-wrap">
+        <div class="success-icon">✓</div>
+        <h1>${isFree ? "Ready to download" : "Payment successful"}</h1>
+        <p>${isFree ? "Your download will start automatically." : "Thank you! Your download should start automatically."}</p>
+        <a class="dl-btn" href="${esc(downloadUrl)}" download>${isFree ? "Download your PDF" : "Download your PDF now"}</a>
+        ${paymentId ? `<p class="tiny-note">Link valid for 60 minutes. Payment ID: <b>${esc(paymentId)}</b></p>` : `<p class="tiny-note">Link valid for 60 minutes.</p>`}
+        <p style="margin-top:20px"><a class="btn btn-ghost" href="/">← Back to home</a></p>
+      </div>`;
+          document.title =
+            (isFree ? "Download ready" : "Payment successful") +
+            " | " +
+            (state.settings.siteName || "PrepShelf");
+          window.scrollTo(0, 0);
+        }
+
+        init();
+      })();
+    </script>
+  </body>
+</html>

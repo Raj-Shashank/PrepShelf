@@ -1,0 +1,1159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title id="page-title">Study material | PrepShelf</title>
+    <meta
+      name="description"
+      content="Notes, e-books, previous year papers and mock tests for government exams and career prep."
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231E45D6'/%3E%3Cpath d='M9 8h11a3 3 0 0 1 3 3v13H12a3 3 0 0 1-3-3V8Z' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@300;400;500;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #16233b;
+        --muted: #5a667a;
+        --line: #e4e8ee;
+        --paper: #f6f7f9;
+        --blue: #1e45d6;
+        --blue-dark: #1533a8;
+        --blue-tint: #eef2fe;
+        --amber: #f2a20c;
+        --amber-tint: #fff4dc;
+        --green: #11794f;
+        --green-tint: #e6f5ee;
+        --head:
+          "Plus Jakarta Sans", "Noto Sans Devanagari", system-ui, sans-serif;
+        --body: "Inter", "Noto Sans Devanagari", system-ui, sans-serif;
+        --gutter: 20px;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        font: 16px/1.55 var(--body);
+        color: var(--ink);
+        background: #fff;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--head);
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+      }
+      ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      :focus-visible {
+        outline: 3px solid #8fa6f5;
+        outline-offset: 2px;
+        border-radius: 6px;
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 var(--gutter);
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        padding: 12px 0;
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        height: 56px;
+        padding: 0 8px 0 18px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.55);
+        -webkit-backdrop-filter: blur(18px) saturate(1.7);
+        backdrop-filter: blur(18px) saturate(1.7);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.8),
+          0 12px 32px -20px rgba(22, 35, 59, 0.4);
+      }
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font: 600 1.08rem var(--head);
+      }
+      .mark {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: var(--blue);
+        color: #fff;
+        display: grid;
+        place-items: center;
+      }
+      .links {
+        display: flex;
+        gap: 2px;
+        margin-left: 10px;
+      }
+      .links a {
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 300;
+        font-size: 0.92rem;
+      }
+      .links a:hover {
+        background: rgba(22, 35, 59, 0.06);
+      }
+      .links a.on {
+        font-weight: 500;
+        background: rgba(22, 35, 59, 0.07);
+      }
+      .auth {
+        margin-left: auto;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+      .auth a {
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-weight: 300;
+        font-size: 0.9rem;
+      }
+      .auth a:hover {
+        background: rgba(22, 35, 59, 0.06);
+      }
+      .auth .dark {
+        background: var(--ink);
+        color: #fff;
+        font-weight: 400;
+        padding: 8px 16px;
+      }
+      .hero {
+        margin-top: -80px;
+        padding: 128px 0 28px;
+        background:
+          radial-gradient(
+            55% 100% at 90% 20%,
+            var(--blue-tint),
+            rgba(238, 242, 254, 0) 70%
+          ),
+          #fff;
+        border-bottom: 1px solid var(--line);
+      }
+      .hero h1 {
+        font-size: clamp(2rem, 4.5vw, 3rem);
+        font-weight: 800;
+        margin-bottom: 10px;
+      }
+      .hero p {
+        color: var(--muted);
+        font-size: 1.1rem;
+        max-width: 52ch;
+      }
+      .search {
+        position: relative;
+        margin-top: 26px;
+        max-width: 640px;
+      }
+      .search svg {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+      }
+      .search input {
+        width: 100%;
+        padding: 15px 18px 15px 46px;
+        border: 1.5px solid var(--line);
+        border-radius: 14px;
+        background: #fff;
+        font-size: 1rem;
+      }
+      .search input:focus,
+      .sel:focus {
+        outline: none;
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px var(--blue-tint);
+      }
+      .bar {
+        padding: 20px 0 4px;
+      }
+      .chips {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+      }
+      .chip {
+        flex: none;
+        padding: 8px 15px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .chip:hover {
+        border-color: var(--blue);
+      }
+      .chip.on {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+      .chip small {
+        opacity: 0.6;
+        margin-left: 4px;
+      }
+      .selects {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .sel {
+        width: 100%;
+        padding: 11px 14px;
+        border: 1.5px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+      }
+      .count {
+        color: var(--muted);
+        font-size: 0.93rem;
+        margin: 18px 0 16px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .count button {
+        background: none;
+        border: 0;
+        color: var(--blue);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+      }
+      main {
+        padding-bottom: 72px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 22px;
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        text-align: left;
+        padding: 0;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+      }
+      .card:hover {
+        border-color: #c9d2e3;
+        box-shadow: 0 18px 40px -22px rgba(22, 35, 59, 0.35);
+      }
+      .cover {
+        position: relative;
+        min-height: 150px;
+        padding: 18px 18px 16px 30px;
+        background: var(--tint);
+        color: var(--tone);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .cover::before {
+        content: "";
+        position: absolute;
+        left: 14px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: var(--tone);
+        opacity: 0.22;
+      }
+      .cover b {
+        font: 800 2rem var(--head);
+        letter-spacing: -0.02em;
+        line-height: 1;
+      }
+      .cover span {
+        font-size: 0.82rem;
+        font-weight: 700;
+      }
+      .body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 16px;
+        flex: 1;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .badge {
+        display: inline-flex;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        background: var(--paper);
+        color: var(--muted);
+      }
+      .badge.g {
+        background: var(--green-tint);
+        color: var(--green);
+      }
+      .badge.b {
+        background: var(--blue-tint);
+        color: var(--blue);
+      }
+      .title {
+        font: 700 1.08rem/1.25 var(--head);
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .foot {
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .price {
+        font: 800 1.3rem var(--head);
+      }
+      .price.free {
+        color: var(--green);
+      }
+      .mrp {
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+      .empty {
+        text-align: center;
+        padding: 56px 20px;
+        border: 1.5px dashed var(--line);
+        border-radius: 14px;
+        color: var(--muted);
+      }
+      .empty h3 {
+        color: var(--ink);
+        margin-bottom: 6px;
+      }
+      dialog {
+        border: 0;
+        padding: 0;
+        border-radius: 22px;
+        width: min(760px, calc(100% - 24px));
+        max-height: calc(100dvh - 24px);
+        box-shadow: 0 30px 80px -20px rgba(22, 35, 59, 0.5);
+        color: var(--ink);
+      }
+      dialog::backdrop {
+        background: rgba(22, 35, 59, 0.45);
+      }
+      .dlg {
+        display: grid;
+        grid-template-columns: 0.85fr 1.15fr;
+      }
+      .dlg .cover {
+        min-height: 100%;
+        padding: 28px 24px 24px 38px;
+      }
+      .dlg .cover::before {
+        left: 18px;
+      }
+      .dlg .cover b {
+        font-size: 3rem;
+      }
+      .dlg .cover h2 {
+        font-size: 1.15rem;
+        line-height: 1.25;
+        max-width: 20ch;
+      }
+      .dbody {
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .dbody h2 {
+        font-size: 1.4rem;
+      }
+      .dbody p {
+        color: #34415a;
+      }
+      .inc li {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+        font-size: 0.95rem;
+      }
+      .inc svg {
+        color: var(--green);
+        margin-top: 3px;
+        flex: none;
+      }
+      .buy {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: auto;
+        padding-top: 6px;
+      }
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        padding: 13px 20px;
+        border-radius: 12px;
+        border: 0;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .btn.pri {
+        background: var(--blue);
+        color: #fff;
+      }
+      .btn.pri:hover {
+        background: var(--blue-dark);
+      }
+      .btn.acc {
+        background: var(--amber);
+        color: #3a2600;
+      }
+      .btn.acc:hover {
+        background: #de9000;
+      }
+      .x {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 0;
+        background: rgba(255, 255, 255, 0.8);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+      }
+      footer {
+        background: var(--paper);
+        border-top: 1px solid var(--line);
+        padding: 32px 0;
+      }
+      .fwrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+      .powered {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 12px 5px 5px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 999px;
+        font-weight: 300;
+      }
+      .powered b {
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--ink);
+      }
+      .powered i {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--ink);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font: 600 0.7rem var(--head);
+        font-style: normal;
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translate(-50%, 20px);
+        background: var(--ink);
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 10px;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.2s;
+        z-index: 300;
+        max-width: 90vw;
+      }
+      #toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      @media (max-width: 900px) {
+        .links {
+          display: none;
+        }
+        .selects {
+          grid-template-columns: 1fr 1fr;
+        }
+        .dlg {
+          grid-template-columns: 1fr;
+        }
+        .dlg .cover {
+          min-height: 150px;
+        }
+      }
+      @media (max-width: 640px) {
+        :root {
+          --gutter: 16px;
+        }
+        header {
+          padding: 10px 0;
+        }
+        .nav {
+          height: 52px;
+          padding: 0 6px 0 14px;
+        }
+        .hero {
+          margin-top: -72px;
+          padding: 104px 0 22px;
+        }
+        .auth a:not(.dark) {
+          display: none;
+        }
+        .grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .body {
+          padding: 12px;
+        }
+        .cover {
+          min-height: 110px;
+          padding: 14px 12px 12px 24px;
+        }
+        .cover::before {
+          left: 11px;
+        }
+        .cover b {
+          font-size: 1.5rem;
+        }
+        .price {
+          font-size: 1.1rem;
+        }
+        .dbody {
+          padding: 20px;
+        }
+      }
+      @media (max-width: 400px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <div class="nav">
+          <a class="logo" href="/">
+            <span class="mark"
+              ><svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" />
+                <path d="M5 17a3 3 0 0 1 3-3h11" /></svg
+            ></span>
+            <span id="siteName">PrepShelf</span>
+          </a>
+          <nav class="links" aria-label="Main">
+            <a href="/">Home</a>
+            <a class="on" href="/Study_material.html" aria-current="page"
+              >Study material</a
+            >
+            <a href="/#/vision">Our vision</a>
+          </nav>
+          <div class="auth">
+            <a href="/#/login">Log in</a>
+            <a class="dark" href="/#/signup">Sign up</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="wrap">
+        <h1 id="hero-title">Study material</h1>
+        <p id="hero-text">
+          E-books, notes, previous year papers and mock tests. Filter by exam,
+          type or price.
+        </p>
+        <label class="search">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input
+            id="q"
+            type="search"
+            placeholder="Search by exam, subject or title"
+            autocomplete="off"
+          />
+        </label>
+      </div>
+    </section>
+
+    <main class="wrap">
+      <div class="bar">
+        <div
+          class="chips"
+          id="chips"
+          role="tablist"
+          aria-label="Exam or track"
+        ></div>
+        <div class="selects">
+          <select class="sel" id="type" aria-label="Type"></select>
+          <select class="sel" id="lang" aria-label="Language"></select>
+          <select class="sel" id="price" aria-label="Price">
+            <option value="">Free and paid</option>
+            <option value="free">Free only</option>
+            <option value="paid">Paid only</option>
+          </select>
+          <select class="sel" id="sort" aria-label="Sort">
+            <option value="featured">Featured first</option>
+            <option value="newest">Newest</option>
+            <option value="low">Price: low to high</option>
+            <option value="high">Price: high to low</option>
+          </select>
+        </div>
+      </div>
+      <div class="count">
+        <span id="count"></span>
+        <button id="clear" hidden>Clear filters</button>
+      </div>
+      <div id="results"></div>
+    </main>
+
+    <footer><div class="wrap fwrap" id="foot"></div></footer>
+    <dialog id="dlg" aria-label="Material details"></dialog>
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        const DEFAULT_SETTINGS = {
+          siteName: "PrepShelf",
+          whatsapp: "",
+          parent: { name: "", url: "" },
+          paymentsEnabled: false,
+          materialsPage: {
+            title: "Study material",
+            text: "E-books, notes, previous year papers and mock tests. Filter by exam, type or price.",
+          },
+        };
+
+        let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+        let tracks = [],
+          materials = [],
+          byTrack = {};
+        const f = {
+          q: "",
+          exam: "",
+          type: "",
+          lang: "",
+          price: "",
+          sort: "featured",
+        };
+
+        function isVisible(m) {
+          const now = Date.now();
+          if (m.status === "draft") return false;
+          if (m.publishAt && new Date(m.publishAt).getTime() > now)
+            return false;
+          if (m.expiresAt && new Date(m.expiresAt).getTime() < now)
+            return false;
+          return true;
+        }
+
+        const $ = (s) => document.querySelector(s);
+        const esc = (s) =>
+          String(s == null ? "" : s).replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[c],
+          );
+        const safeUrl = (u) =>
+          /^(https?:\/\/|mailto:|tel:)/i.test(String(u || "").trim())
+            ? String(u).trim()
+            : "";
+        const inr = (n) => "\u20B9" + Number(n || 0).toLocaleString("en-IN");
+        const off = (m) =>
+          m.mrp > m.price && m.price > 0
+            ? Math.round((1 - m.price / m.mrp) * 100)
+            : 0;
+        const tint = (h) =>
+          `--tint:hsl(${Number(h) || 220} 65% 94%);--tone:hsl(${Number(h) || 220} 55% 28%)`;
+        const CHECK =
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+
+        let toastTimer;
+        function toast(msg) {
+          const t = $("#toast");
+          if (!t) return;
+          t.textContent = msg;
+          t.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+        }
+
+        async function loadData() {
+          const [s, exams, mats] = await Promise.all([
+            fetch("/api/settings")
+              .then((r) => (r.ok ? r.json() : {}))
+              .catch(() => ({})),
+            fetch("/api/exams")
+              .then((r) => (r.ok ? r.json() : []))
+              .catch(() => []),
+            fetch("/api/materials")
+              .then((r) => (r.ok ? r.json() : []))
+              .catch(() => []),
+          ]);
+          settings = Object.assign({}, DEFAULT_SETTINGS, s || {});
+          settings.parent = Object.assign(
+            {},
+            DEFAULT_SETTINGS.parent,
+            (s && s.parent) || {},
+          );
+          settings.materialsPage = Object.assign(
+            {},
+            DEFAULT_SETTINGS.materialsPage,
+            (s && s.materialsPage) || {},
+          );
+          settings.paymentsEnabled = !!(s && s.paymentsEnabled);
+          tracks = exams.filter((e) => e.status !== "soon");
+          materials = mats.filter(isVisible);
+          byTrack = {};
+          exams.forEach((t) => {
+            byTrack[t.id] = t;
+          });
+          document.getElementById("siteName").textContent =
+            settings.siteName || "PrepShelf";
+          const title =
+            (settings.materialsPage.title || "Study material") +
+            " | " +
+            (settings.siteName || "PrepShelf");
+          document.title = title;
+          const pt = document.getElementById("page-title");
+          if (pt) pt.textContent = title;
+          const ht = document.getElementById("hero-title");
+          if (ht)
+            ht.textContent = settings.materialsPage.title || "Study material";
+          const htx = document.getElementById("hero-text");
+          if (htx) htx.textContent = settings.materialsPage.text || "";
+        }
+
+        const priceHtml = (m) =>
+          m.price > 0
+            ? '<span class="price">' +
+              inr(m.price) +
+              "</span>" +
+              (off(m)
+                ? '<s class="mrp">' +
+                  inr(m.mrp) +
+                  '</s><span class="badge g">' +
+                  off(m) +
+                  "% off</span>"
+                : "")
+            : '<span class="price free">Free</span>';
+
+        function card(m) {
+          const t = byTrack[m.exam];
+          const cover = m.thumbnailUrl
+            ? '<span class="cover" style="' +
+              tint(t ? t.hue : 220) +
+              ";background-image:url(" +
+              esc(m.thumbnailUrl) +
+              ');background-size:cover;background-position:center"><b style="text-shadow:0 2px 6px rgba(0,0,0,.5);color:#fff">' +
+              esc(t ? t.short : "PDF") +
+              '</b><span style="text-shadow:0 2px 6px rgba(0,0,0,.5);color:#fff">' +
+              esc(m.type) +
+              "</span></span>"
+            : '<span class="cover" style="' +
+              tint(t ? t.hue : 220) +
+              '"><b>' +
+              esc(t ? t.short : "PDF") +
+              "</b><span>" +
+              esc(m.type) +
+              "</span></span>";
+          return (
+            '<button class="card" data-id="' +
+            esc(m.id) +
+            '">' +
+            cover +
+            '<span class="body"><span class="meta"><span class="badge">' +
+            esc(m.language) +
+            "</span>" +
+            (m.pages
+              ? '<span class="badge">' + m.pages + " pages</span>"
+              : "") +
+            "</span>" +
+            '<span class="title">' +
+            esc(m.title) +
+            '</span><span class="foot">' +
+            priceHtml(m) +
+            "</span></span></button>"
+          );
+        }
+
+        function filtered() {
+          const words = f.q.toLowerCase().split(/\s+/).filter(Boolean);
+          const rows = materials.filter((m) => {
+            if (f.exam && m.exam !== f.exam) return false;
+            if (f.type && m.type !== f.type) return false;
+            if (f.lang && m.language !== f.lang) return false;
+            if (f.price === "free" && m.price > 0) return false;
+            if (f.price === "paid" && !(m.price > 0)) return false;
+            const hay = (
+              m.title +
+              " " +
+              (m.description || "") +
+              " " +
+              m.type +
+              " " +
+              ((byTrack[m.exam] || {}).name || "")
+            ).toLowerCase();
+            return words.every((w) => hay.indexOf(w) !== -1);
+          });
+          const sorter = {
+            featured: (a, b) =>
+              (b.featured ? 1 : 0) - (a.featured ? 1 : 0) ||
+              String(b.createdAt || "").localeCompare(
+                String(a.createdAt || ""),
+              ),
+            newest: (a, b) =>
+              String(b.createdAt || "").localeCompare(
+                String(a.createdAt || ""),
+              ),
+            low: (a, b) => a.price - b.price,
+            high: (a, b) => b.price - a.price,
+          };
+          return rows.sort(sorter[f.sort] || sorter.featured);
+        }
+
+        function render() {
+          const rows = filtered();
+          const active = f.q || f.exam || f.type || f.lang || f.price;
+          $("#count").textContent =
+            rows.length + " result" + (rows.length === 1 ? "" : "s");
+          $("#clear").hidden = !active;
+          $("#results").innerHTML = rows.length
+            ? '<div class="grid">' + rows.map(card).join("") + "</div>"
+            : '<div class="empty"><h3>No material found</h3><p>Try a different exam or clear the filters.</p></div>';
+          const counts = {};
+          materials.forEach((m) => {
+            counts[m.exam] = (counts[m.exam] || 0) + 1;
+          });
+          $("#chips").innerHTML = [{ id: "", name: "All", n: materials.length }]
+            .concat(
+              tracks.map((t) => ({
+                id: t.id,
+                name: t.name,
+                n: counts[t.id] || 0,
+              })),
+            )
+            .map(
+              (c) =>
+                '<button class="chip' +
+                (f.exam === c.id ? " on" : "") +
+                '" data-exam="' +
+                esc(c.id) +
+                '">' +
+                esc(c.name) +
+                "<small>" +
+                c.n +
+                "</small></button>",
+            )
+            .join("");
+          const qs = new URLSearchParams(
+            Object.keys(f)
+              .filter((k) => f[k] && !(k === "sort" && f[k] === "featured"))
+              .map((k) => [k, f[k]]),
+          ).toString();
+          try {
+            history.replaceState(
+              null,
+              "",
+              location.pathname + (qs ? "#" + qs : ""),
+            );
+          } catch (e) {}
+        }
+
+        function open(id) {
+          const m = materials.filter((x) => x.id === id)[0];
+          if (!m) return;
+          const t = byTrack[m.exam];
+          const wa = settings.whatsapp
+            ? "https://wa.me/" +
+              settings.whatsapp +
+              "?text=" +
+              encodeURIComponent("Hi, I want: " + m.title)
+            : "";
+
+          /* ============================================================
+       Both free and paid items now route through /pay.html
+       Paid: shows coupon + Razorpay checkout
+       Free: shows "Free" total + Download button, then auto-downloads
+    ============================================================ */
+          let href, label;
+          if (m.price > 0) {
+            label = "Buy for " + inr(m.price);
+            const ext = safeUrl(m.buyUrl);
+            href = ext || "/pay.html?id=" + encodeURIComponent(m.id);
+          } else {
+            label = "Download free PDF";
+            href = "/pay.html?id=" + encodeURIComponent(m.id);
+          }
+          const isExternal = /^https?:/i.test(href || "");
+          const btn = href
+            ? '<a class="btn ' +
+              (m.price > 0 ? "acc" : "pri") +
+              '" href="' +
+              esc(href) +
+              '"' +
+              (isExternal ? ' target="_blank" rel="noopener"' : "") +
+              ">" +
+              label +
+              "</a>"
+            : '<button class="btn ' +
+              (m.price > 0 ? "acc" : "pri") +
+              '" data-nolink>' +
+              label +
+              "</button>";
+
+          const includes = String(m.includes || "")
+            .split(/\r?\n/)
+            .filter(Boolean);
+          $("#dlg").innerHTML =
+            '<div class="dlg" style="position:relative">' +
+            '<div class="cover" style="' +
+            tint(t ? t.hue : 220) +
+            '"><b>' +
+            esc(t ? t.short : "PDF") +
+            "</b><h2>" +
+            esc(m.title) +
+            "</h2></div>" +
+            '<div class="dbody"><div class="meta"><span class="badge b">' +
+            esc(m.type) +
+            '</span><span class="badge">' +
+            esc(m.language) +
+            "</span>" +
+            (m.pages
+              ? '<span class="badge">' + m.pages + " pages</span>"
+              : "") +
+            "</div>" +
+            "<h2>" +
+            esc(m.title) +
+            "</h2><p>" +
+            esc(m.description) +
+            "</p>" +
+            (includes.length
+              ? '<div><b>What is inside</b><ul class="inc">' +
+                includes
+                  .map(
+                    (i) => "<li>" + CHECK + "<span>" + esc(i) + "</span></li>",
+                  )
+                  .join("") +
+                "</ul></div>"
+              : "") +
+            '<div class="buy"><div class="foot">' +
+            priceHtml(m) +
+            "</div>" +
+            btn +
+            "</div></div>" +
+            '<button class="x" data-close><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>';
+          const dlg = $("#dlg");
+          if (!dlg.open) dlg.showModal();
+          f.id = id;
+        }
+
+        document.addEventListener("click", (e) => {
+          const c = e.target.closest(".card");
+          if (c) return open(c.dataset.id);
+          const ch = e.target.closest("[data-exam]");
+          if (ch) {
+            f.exam = ch.dataset.exam;
+            return render();
+          }
+          if (e.target.closest("[data-close]") || e.target === $("#dlg"))
+            $("#dlg").close();
+          if (e.target.closest("[data-nolink]"))
+            toast("No link added yet. Add one in Admin.");
+        });
+        $("#q").addEventListener("input", (e) => {
+          f.q = e.target.value.trim();
+          render();
+        });
+        ["type", "lang", "price", "sort"].forEach((k) =>
+          $("#" + k).addEventListener("change", (e) => {
+            f[k] = e.target.value;
+            render();
+          }),
+        );
+        $("#clear").addEventListener("click", () => {
+          Object.assign(f, {
+            q: "",
+            exam: "",
+            type: "",
+            lang: "",
+            price: "",
+            sort: "featured",
+          });
+          $("#q").value = "";
+          ["type", "lang", "price", "sort"].forEach((k) => {
+            $("#" + k).value = f[k];
+          });
+          render();
+        });
+
+        (async function init() {
+          await loadData();
+          const opts = (label, list) =>
+            '<option value="">' +
+            label +
+            "</option>" +
+            [...new Set(list)]
+              .map((v) => "<option>" + esc(v) + "</option>")
+              .join("");
+          $("#type").innerHTML = opts(
+            "All types",
+            materials.map((m) => m.type),
+          );
+          $("#lang").innerHTML = opts(
+            "All languages",
+            materials.map((m) => m.language),
+          );
+          const p = Object.fromEntries(
+            new URLSearchParams(location.hash.slice(1)),
+          );
+          ["q", "exam", "type", "lang", "price", "sort"].forEach((k) => {
+            if (p[k]) f[k] = p[k];
+          });
+          $("#q").value = f.q;
+          ["type", "lang", "price", "sort"].forEach((k) => {
+            $("#" + k).value = f[k];
+          });
+          const P = settings.parent || { name: "", url: "" };
+          const tag =
+            "<i>" +
+            esc((P.name || "T")[0]) +
+            "</i>Powered by <b>" +
+            esc(P.name || "") +
+            "</b>";
+          $("#foot").innerHTML =
+            "<span>&copy; " +
+            new Date().getFullYear() +
+            " " +
+            esc(settings.siteName || "PrepShelf") +
+            (P.name ? ", a product of " + esc(P.name) : "") +
+            ".</span>" +
+            (P.name
+              ? safeUrl(P.url)
+                ? '<a class="powered" href="' +
+                  esc(P.url) +
+                  '" target="_blank">' +
+                  tag +
+                  "</a>"
+                : '<span class="powered">' + tag + "</span>"
+              : "");
+          render();
+          if (p.id) open(p.id);
+        })();
+      })();
+    </script>
+  </body>
+</html>
