@@ -55,6 +55,7 @@ const couponsCol = db.collection("coupons");
 const ordersCol = db.collection("orders");
 const tokensCol = db.collection("tokens");
 const settingsCol = db.collection("settings");
+const customersCol = db.collection("customers"); // <-- NEW: customer accounts
 
 /* ============================================================
    RAZORPAY
@@ -144,7 +145,6 @@ function hashPassword(plain) {
 
 function verifyPassword(plain, stored) {
   if (!stored || typeof stored !== "string") return false;
-  /* Hashed format: scrypt$salt$hash */
   if (stored.indexOf("scrypt$") === 0) {
     const parts = stored.split("$");
     if (parts.length !== 3) return false;
@@ -165,7 +165,6 @@ function verifyPassword(plain, stored) {
       return false;
     }
   }
-  /* Legacy plain text (admin123, seed password, etc.) */
   return String(plain) === stored;
 }
 
@@ -576,10 +575,10 @@ async function ensureSeed() {
 }
 
 /* ============================================================
-   AUTH — token store with expiry
+   AUTH — admin token store with expiry
 ============================================================ */
-const TOKENS = new Map(); /* token -> expiresAt (ms) */
-const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7; /* 7 days */
+const TOKENS = new Map();
+const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
 function issueToken() {
   const token = crypto.randomBytes(32).toString("hex");
@@ -598,7 +597,6 @@ function auth(req, res, next) {
   res.status(401).json({ error: "unauthorized" });
 }
 
-/* Periodic cleanup of expired tokens */
 setInterval(
   () => {
     const now = Date.now();
@@ -607,10 +605,10 @@ setInterval(
     }
   },
   1000 * 60 * 60,
-); /* every hour */
+);
 
 /* ============================================================
-   LOGIN — password
+   LOGIN — admin password
 ============================================================ */
 app.post(
   "/api/login",
@@ -633,8 +631,9 @@ app.post(
 );
 
 /* ============================================================
-   GOOGLE SIGN-IN
-   Verifies the Google ID token via Google's tokeninfo endpoint.
+   ADMIN GOOGLE SIGN-IN
+   (unchanged) — verifies via Google tokeninfo, checks allowlist,
+   issues an admin token.
 ============================================================ */
 app.post(
   "/api/auth/google",
@@ -645,7 +644,6 @@ app.post(
       if (!credential)
         return res.status(400).json({ error: "Missing Google credential" });
 
-      /* Node 18+ has global fetch. Fallback for older Node: */
       const fetchFn =
         typeof fetch === "function" ? fetch : require("node-fetch");
 
@@ -660,14 +658,12 @@ app.post(
       const settings = (await getSettings()) || {};
       const g = settings.google || {};
 
-      /* Audience check — token must be issued for our client ID */
       if (g.clientId && payload.aud && payload.aud !== g.clientId) {
         return res
           .status(401)
           .json({ error: "Token was not issued for this application" });
       }
 
-      /* Email + verification */
       const email = String(payload.email || "")
         .trim()
         .toLowerCase();
@@ -678,8 +674,6 @@ app.post(
       if (!verified)
         return res.status(401).json({ error: "Google email is not verified" });
 
-      /* Allowlist — check settings.google.allowedEmails, env ADMIN_EMAILS,
-         and any signed-up adminUsers */
       const allowedSetting = String(g.allowedEmails || "")
         .split(/\r?\n/)
         .map((s) => s.trim().toLowerCase())
@@ -707,11 +701,7 @@ app.post(
       }
 
       const token = issueToken();
-      res.json({
-        token,
-        email,
-        name: payload.name || "",
-      });
+      res.json({ token, email, name: payload.name || "" });
     } catch (e) {
       console.error("google auth error:", e);
       res.status(500).json({ error: "Google sign-in failed" });
@@ -720,7 +710,7 @@ app.post(
 );
 
 /* ============================================================
-   SIGNUP — create an additional admin account
+   ADMIN SIGNUP — create an additional admin account
 ============================================================ */
 app.post(
   "/api/auth/signup",
@@ -798,6 +788,251 @@ app.post("/api/admin/password", auth, async (req, res) => {
     console.error("password change error:", e);
     res.status(500).json({ error: "Could not change password" });
   }
+});
+
+/* ============================================================
+   CUSTOMER AUTH — separate namespace from admin.
+   Stored in "customers" collection. Tokens live in CUSTOMER_TOKENS
+   so they never collide with admin tokens.
+============================================================ */
+const CUSTOMER_TOKENS = new Map();
+const CUSTOMER_TTL_MS = 1000 * 60 * 60 * 24 * 30; /* 30 days */
+
+function issueCustomerToken(userId) {
+  const token = crypto.randomBytes(32).toString("hex");
+  CUSTOMER_TOKENS.set(token, {
+    userId,
+    expiresAt: Date.now() + CUSTOMER_TTL_MS,
+  });
+  return token;
+}
+
+function customerAuth(req, res, next) {
+  const h = req.headers.authorization || "";
+  const t = h.replace(/^Bearer\s+/i, "");
+  if (t && CUSTOMER_TOKENS.has(t)) {
+    const rec = CUSTOMER_TOKENS.get(t);
+    if (rec.expiresAt > Date.now()) {
+      req.customer = rec;
+      req.customerToken = t;
+      return next();
+    }
+    CUSTOMER_TOKENS.delete(t);
+  }
+  res.status(401).json({ error: "unauthorized" });
+}
+
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [t, rec] of CUSTOMER_TOKENS) {
+      if (rec.expiresAt <= now) CUSTOMER_TOKENS.delete(t);
+    }
+  },
+  1000 * 60 * 60,
+);
+
+function publicCustomer(c) {
+  if (!c) return null;
+  return {
+    id: c.id,
+    name: c.name || "",
+    email: c.email || "",
+    createdAt: c.createdAt || "",
+  };
+}
+
+async function findCustomerByEmail(email) {
+  const snap = await customersCol.where("email", "==", email).limit(1).get();
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return { id: doc.id, ...doc.data() };
+}
+
+async function findCustomerByGoogleId(gid) {
+  if (!gid) return null;
+  const snap = await customersCol.where("googleId", "==", gid).limit(1).get();
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return { id: doc.id, ...doc.data() };
+}
+
+/* ---- Customer SIGNUP (email + password) ---- */
+app.post(
+  "/api/customer/signup",
+  rateLimit(60000, 10, (r) => r.ip),
+  async (req, res) => {
+    try {
+      const body = req.body || {};
+      const name = String(body.name || "").trim();
+      const email = String(body.email || "")
+        .trim()
+        .toLowerCase();
+      const password = String(body.password || "");
+
+      if (name.length < 2)
+        return res.status(400).json({ error: "Name is too short" });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        return res.status(400).json({ error: "Invalid email address" });
+      if (password.length < 6)
+        return res
+          .status(400)
+          .json({ error: "Password must be at least 6 characters" });
+
+      const existing = await findCustomerByEmail(email);
+      if (existing)
+        return res
+          .status(409)
+          .json({ error: "An account with this email already exists" });
+
+      const id = uid();
+      const record = {
+        id,
+        name,
+        email,
+        password: hashPassword(password),
+        googleId: "",
+        picture: "",
+        createdAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+      };
+      await customersCol.doc(id).set(record);
+
+      const token = issueCustomerToken(id);
+      res.json({ token, user: publicCustomer(record) });
+    } catch (e) {
+      console.error("customer signup error:", e);
+      res.status(500).json({ error: "Sign up failed" });
+    }
+  },
+);
+
+/* ---- Customer LOGIN (email + password) ---- */
+app.post(
+  "/api/customer/login",
+  rateLimit(60000, 15, (r) => r.ip),
+  async (req, res) => {
+    try {
+      const body = req.body || {};
+      const email = String(body.email || "")
+        .trim()
+        .toLowerCase();
+      const password = String(body.password || "");
+      if (!email || !password)
+        return res.status(400).json({ error: "Email and password required" });
+
+      const user = await findCustomerByEmail(email);
+      if (!user || !user.password)
+        return res.status(401).json({ error: "Invalid email or password" });
+      if (!verifyPassword(password, user.password))
+        return res.status(401).json({ error: "Invalid email or password" });
+
+      await customersCol
+        .doc(user.id)
+        .set({ lastLoginAt: new Date().toISOString() }, { merge: true });
+
+      const token = issueCustomerToken(user.id);
+      res.json({ token, user: publicCustomer(user) });
+    } catch (e) {
+      console.error("customer login error:", e);
+      res.status(500).json({ error: "Login failed" });
+    }
+  },
+);
+
+/* ---- Customer GOOGLE SIGN-IN ---- */
+app.post(
+  "/api/customer/google",
+  rateLimit(60000, 20, (r) => r.ip),
+  async (req, res) => {
+    try {
+      const { credential } = req.body || {};
+      if (!credential)
+        return res.status(400).json({ error: "Missing Google credential" });
+
+      const fetchFn =
+        typeof fetch === "function" ? fetch : require("node-fetch");
+      const url =
+        "https://oauth2.googleapis.com/tokeninfo?id_token=" +
+        encodeURIComponent(credential);
+      const gr = await fetchFn(url);
+      if (!gr.ok)
+        return res.status(401).json({ error: "Invalid Google token" });
+      const payload = await gr.json();
+
+      const settings = (await getSettings()) || {};
+      const g = settings.google || {};
+      if (g.clientId && payload.aud && payload.aud !== g.clientId) {
+        return res
+          .status(401)
+          .json({ error: "Token was not issued for this application" });
+      }
+
+      const email = String(payload.email || "")
+        .trim()
+        .toLowerCase();
+      if (!email)
+        return res.status(401).json({ error: "No email in Google token" });
+      const verified =
+        payload.email_verified === true || payload.email_verified === "true";
+      if (!verified)
+        return res.status(401).json({ error: "Google email is not verified" });
+
+      const googleId = String(payload.sub || "");
+      let user = await findCustomerByGoogleId(googleId);
+      if (!user) user = await findCustomerByEmail(email);
+
+      if (!user) {
+        const id = uid();
+        const record = {
+          id,
+          name: payload.name || email.split("@")[0],
+          email,
+          password: "",
+          googleId,
+          picture: payload.picture || "",
+          createdAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+        };
+        await customersCol.doc(id).set(record);
+        user = record;
+      } else {
+        await customersCol.doc(user.id).set(
+          {
+            googleId: googleId || user.googleId || "",
+            lastLoginAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
+        user = { ...user, googleId: googleId || user.googleId };
+      }
+
+      const token = issueCustomerToken(user.id);
+      res.json({ token, user: publicCustomer(user) });
+    } catch (e) {
+      console.error("customer google error:", e);
+      res.status(500).json({ error: "Google sign-in failed" });
+    }
+  },
+);
+
+/* ---- Customer SESSION CHECK ---- */
+app.get("/api/customer/me", customerAuth, async (req, res) => {
+  try {
+    const doc = await customersCol.doc(req.customer.userId).get();
+    if (!doc.exists) return res.status(401).json({ error: "unauthorized" });
+    const c = { id: doc.id, ...doc.data() };
+    res.json({ user: publicCustomer(c) });
+  } catch (e) {
+    console.error("customer me error:", e);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+/* ---- Customer LOGOUT ---- */
+app.post("/api/customer/logout", customerAuth, async (req, res) => {
+  if (req.customerToken) CUSTOMER_TOKENS.delete(req.customerToken);
+  res.json({ ok: true });
 });
 
 /* ============================================================
@@ -916,7 +1151,6 @@ app.get("/api/settings", async (req, res) => {
     const s = (await getSettings()) || {};
     const safe = { ...s };
     delete safe.adminPassword;
-    /* Never leak adminUsers passwords */
     if (Array.isArray(safe.adminUsers)) {
       safe.adminUsers = safe.adminUsers.map((u) => ({
         id: u.id,
@@ -1287,7 +1521,7 @@ app.post(
 );
 
 /* ============================================================
-   DOWNLOAD — robust with diagnostics
+   DOWNLOAD
 ============================================================ */
 app.get("/api/download/:token", async (req, res) => {
   res.set("X-Robots-Tag", "noindex, nofollow");
@@ -1308,25 +1542,6 @@ app.get("/api/download/:token", async (req, res) => {
     console.log("Free item:     ", !!t.free);
     console.log("fileUrl:       ", m.fileUrl || "(empty)");
     console.log("privateFileUrl:", m.privateFileUrl || "(empty)");
-    console.log("Private folder:", PRIVATE_UPLOAD);
-    console.log("Public folder: ", PUBLIC_UPLOAD);
-
-    try {
-      const privFiles = fs.readdirSync(PRIVATE_UPLOAD);
-      const pubFiles = fs.readdirSync(PUBLIC_UPLOAD);
-      console.log(
-        "Files in private-uploads:",
-        privFiles.length,
-        privFiles.slice(0, 5),
-      );
-      console.log(
-        "Files in public/uploads: ",
-        pubFiles.length,
-        pubFiles.slice(0, 5),
-      );
-    } catch (e) {
-      console.log("Could not read upload folders:", e.message);
-    }
 
     const candidates = [];
     if (m.privateFileUrl) candidates.push(m.privateFileUrl);
@@ -1352,7 +1567,6 @@ app.get("/api/download/:token", async (req, res) => {
           const stat = fs.statSync(p);
           if (stat.isFile()) {
             filePath = p;
-            console.log("✓ Found file at:", p, "(" + stat.size + " bytes)");
             break;
           }
         }
@@ -1361,7 +1575,6 @@ app.get("/api/download/:token", async (req, res) => {
     }
 
     if (!filePath && externalUrl) {
-      console.log("→ Redirecting to external URL:", externalUrl);
       await tokensCol
         .doc(req.params.token)
         .update({ downloads: (t.downloads || 0) + 1 });
@@ -1415,7 +1628,6 @@ app.get("/api/admin/all", auth, async (req, res) => {
       ]);
     const clean = (snap) =>
       snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    /* Strip password fields from settings before sending to admin */
     const safeSettings = settings ? { ...settings } : {};
     delete safeSettings.adminPassword;
     if (Array.isArray(safeSettings.adminUsers)) {
@@ -1439,7 +1651,6 @@ app.get("/api/admin/all", auth, async (req, res) => {
   }
 });
 
-/* Exams */
 app.post("/api/exams", auth, async (req, res) => {
   try {
     const item = { ...req.body };
@@ -1469,7 +1680,6 @@ app.delete("/api/exams/:id", auth, async (req, res) => {
   }
 });
 
-/* Materials */
 app.post("/api/materials", auth, async (req, res) => {
   try {
     const item = { ...req.body };
@@ -1499,15 +1709,12 @@ app.delete("/api/materials/:id", auth, async (req, res) => {
   }
 });
 
-/* Settings — auto-hash adminPassword if it arrives as plain text */
 app.put("/api/settings", auth, async (req, res) => {
   try {
     const patch = req.body || {};
-    /* Hash plain password if it was sent through the settings fallback */
     if (patch.adminPassword && !looksHashed(patch.adminPassword)) {
       patch.adminPassword = hashPassword(patch.adminPassword);
     }
-    /* Do not let settings silently wipe adminUsers passwords */
     if (Array.isArray(patch.adminUsers)) {
       const current = (await getSettings()) || {};
       const existing = Array.isArray(current.adminUsers)
@@ -1542,7 +1749,6 @@ app.put("/api/settings", auth, async (req, res) => {
   }
 });
 
-/* Leads */
 app.get("/api/leads", auth, async (req, res) => {
   try {
     const snap = await leadsCol.orderBy("createdAt", "desc").get();
@@ -1576,7 +1782,6 @@ app.delete("/api/leads", auth, async (req, res) => {
   }
 });
 
-/* Coupons */
 app.get("/api/coupons", auth, async (req, res) => {
   try {
     const snap = await couponsCol.orderBy("createdAt", "desc").get();
@@ -1622,7 +1827,6 @@ app.delete("/api/coupons/:id", auth, async (req, res) => {
   }
 });
 
-/* Payments log */
 app.get("/api/payments", auth, async (req, res) => {
   try {
     const snap = await ordersCol.orderBy("createdAt", "desc").get();
@@ -1633,14 +1837,12 @@ app.get("/api/payments", auth, async (req, res) => {
   }
 });
 
-/* Delete an order — admin.html tries /api/payments/:id first */
 async function deleteOrderById(id) {
   const doc = await ordersCol.doc(id).get();
   if (doc.exists) {
     await ordersCol.doc(id).delete();
     return true;
   }
-  /* Fallback: search by orderId field */
   const snap = await ordersCol.where("orderId", "==", id).limit(1).get();
   if (!snap.empty) {
     await snap.docs[0].ref.delete();
@@ -1671,7 +1873,6 @@ app.delete("/api/orders/:id", auth, async (req, res) => {
   }
 });
 
-/* Export / Import / Reset */
 app.get("/api/export", auth, async (req, res) => {
   try {
     const [
@@ -1732,7 +1933,6 @@ app.post("/api/import", auth, async (req, res) => {
     await writeAll(couponsCol, data.coupons);
     if (data.settings) {
       const patch = { ...data.settings };
-      /* Hash plain password if importing older backup */
       if (patch.adminPassword && !looksHashed(patch.adminPassword)) {
         patch.adminPassword = hashPassword(patch.adminPassword);
       }

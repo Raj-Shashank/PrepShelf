@@ -22,6 +22,8 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Google Identity Services (for Sign in with Google) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
       :root {
         --white: #fff;
@@ -1004,7 +1006,7 @@
         color: var(--blue);
       }
       .login {
-        max-width: 400px;
+        max-width: 420px;
         margin: 56px auto;
         padding: 32px;
         border: 1px solid var(--line);
@@ -1017,10 +1019,66 @@
         margin-bottom: 6px;
       }
       .login .field {
-        margin: 18px 0 0;
+        margin: 14px 0 0;
       }
       .login .btn {
         margin-top: 20px;
+      }
+      .login-alt {
+        margin-top: 18px;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+      .login-alt a {
+        color: var(--blue);
+        font-weight: 600;
+      }
+      .login-alt a:hover {
+        text-decoration: underline;
+      }
+      .auth-divider {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 18px 0;
+        color: var(--muted);
+        font-size: 0.78rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .auth-divider::before,
+      .auth-divider::after {
+        content: "";
+        height: 1px;
+        background: var(--line);
+        flex: 1;
+      }
+      .g-slot {
+        display: flex;
+        justify-content: center;
+        min-height: 44px;
+        align-items: center;
+      }
+      .g-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        padding: 11px 18px;
+        border-radius: 10px;
+        border: 1.5px solid var(--line);
+        background: #fff;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .g-btn:hover {
+        border-color: var(--ink);
+      }
+      .g-btn svg {
+        flex: none;
       }
       .site-footer {
         background: var(--paper);
@@ -1274,6 +1332,7 @@
               "detail-bottom": "",
             },
           },
+          google: { clientId: "" },
           home: {
             tracksTitle: "Choose your path",
             tracksText: "",
@@ -1356,6 +1415,14 @@
         const icon = (n, size = 18) =>
           `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ""}</svg>`;
 
+        const GOOGLE_ICON =
+          '<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">' +
+          '<path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-2.8-.4-4.1H24v7.5h12c-.2 2-1.5 5-4.4 7l-.1.2 6.4 4.9.4.1c4.1-3.7 6.8-9.3 6.8-15.6z"/>' +
+          '<path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.3c-1.9 1.3-4.4 2.2-7.6 2.2-5.8 0-10.7-3.8-12.4-9.1l-.2.1-6.7 5.2-.1.2C8.2 41 15.5 46 24 46z"/>' +
+          '<path fill="#FBBC05" d="M11.6 28.5c-.5-1.4-.8-2.9-.8-4.5s.3-3.1.7-4.5v-.2L4.7 14l-.2.1A22 22 0 0 0 2 24c0 3.6.9 6.9 2.5 9.9l7.1-5.4z"/>' +
+          '<path fill="#EA4335" d="M24 10.1c4.1 0 6.9 1.8 8.5 3.3l6.2-6.1C34.9 3.9 29.9 2 24 2 15.5 2 8.2 7 4.5 14.1l7.1 5.4C13.3 13.9 18.2 10.1 24 10.1z"/>' +
+          "</svg>";
+
         let toastTimer;
         function toast(msg) {
           const t = $("#toast");
@@ -1404,19 +1471,191 @@
           }
         }
 
+        /* ============================================================
+           CUSTOMER AUTH — talks to /api/customer/*
+           Token is stored in its own localStorage key so it never
+           collides with the admin token (ps_admin_token).
+        ============================================================ */
+        const CUSTOMER_TOKEN_KEY = "ps_customer_token";
         const userAuth = {
-          enabled: false,
+          enabled: true,
+          _getToken() {
+            try {
+              return localStorage.getItem(CUSTOMER_TOKEN_KEY) || "";
+            } catch (e) {
+              return "";
+            }
+          },
+          _setToken(t) {
+            try {
+              if (t) localStorage.setItem(CUSTOMER_TOKEN_KEY, t);
+              else localStorage.removeItem(CUSTOMER_TOKEN_KEY);
+            } catch (e) {}
+          },
           async session() {
-            return null;
+            const t = this._getToken();
+            if (!t) return null;
+            try {
+              const r = await fetch("/api/customer/me", {
+                headers: { authorization: "Bearer " + t },
+              });
+              if (!r.ok) {
+                this._setToken("");
+                return null;
+              }
+              const data = await r.json();
+              return data.user || null;
+            } catch (e) {
+              return null;
+            }
           },
-          async signUp() {
-            throw new Error("Accounts are not live yet");
+          async signUp(name, email, password) {
+            const r = await fetch("/api/customer/signup", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ name, email, password }),
+            });
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.error || "Sign up failed");
+            this._setToken(data.token);
+            return data.user || null;
           },
-          async signIn() {
-            throw new Error("Accounts are not live yet");
+          async signIn(email, password) {
+            const r = await fetch("/api/customer/login", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ email, password }),
+            });
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.error || "Login failed");
+            this._setToken(data.token);
+            return data.user || null;
           },
-          async signOut() {},
+          async signOut() {
+            const t = this._getToken();
+            try {
+              await fetch("/api/customer/logout", {
+                method: "POST",
+                headers: t ? { authorization: "Bearer " + t } : {},
+              });
+            } catch (e) {}
+            this._setToken("");
+          },
+          _setUserFromGoogle(data) {
+            this._setToken(data.token);
+            return data.user || null;
+          },
         };
+
+        /* ============================================================
+           GOOGLE IDENTITY SERVICES
+        ============================================================ */
+        const GIS_SRC = "https://accounts.google.com/gsi/client";
+        let gisPromise = null;
+
+        function loadGis() {
+          if (window.google && window.google.accounts) return Promise.resolve();
+          if (gisPromise) return gisPromise;
+          gisPromise = new Promise(function (resolve, reject) {
+            if (document.querySelector('script[src="' + GIS_SRC + '"]')) {
+              /* already injected via <head>, just wait for it */
+              let tries = 0;
+              const t = setInterval(() => {
+                tries++;
+                if (window.google && window.google.accounts) {
+                  clearInterval(t);
+                  resolve();
+                } else if (tries > 100) {
+                  clearInterval(t);
+                  reject(new Error("Google script not ready"));
+                }
+              }, 60);
+              return;
+            }
+            const s = document.createElement("script");
+            s.src = GIS_SRC;
+            s.async = true;
+            s.defer = true;
+            s.onload = () => resolve();
+            s.onerror = () => reject(new Error("Could not load Google"));
+            document.head.appendChild(s);
+          });
+          return gisPromise;
+        }
+
+        function googleClientId() {
+          const g = (settings && settings.google) || {};
+          return String(g.clientId || "").trim();
+        }
+
+        function googleFallbackButton() {
+          return (
+            '<button type="button" class="g-btn" data-action="google-help">' +
+            GOOGLE_ICON +
+            " Continue with Google</button>"
+          );
+        }
+
+        function mountGoogle() {
+          const slot = document.getElementById("g-slot");
+          if (!slot) return;
+          const cid = googleClientId();
+          if (!cid) {
+            slot.innerHTML = googleFallbackButton();
+            return;
+          }
+          slot.innerHTML = '<div id="g-btn-target"></div>';
+          loadGis()
+            .then(function () {
+              if (
+                !(
+                  window.google &&
+                  window.google.accounts &&
+                  window.google.accounts.id
+                )
+              ) {
+                slot.innerHTML = googleFallbackButton();
+                return;
+              }
+              window.google.accounts.id.initialize({
+                client_id: cid,
+                callback: handleGoogleCredential,
+              });
+              const target = document.getElementById("g-btn-target");
+              if (!target) return;
+              window.google.accounts.id.renderButton(target, {
+                theme: "outline",
+                size: "large",
+                shape: "pill",
+                text: "continue_with",
+                logo_alignment: "left",
+                width: 320,
+              });
+            })
+            .catch(function () {
+              slot.innerHTML = googleFallbackButton();
+            });
+        }
+
+        async function handleGoogleCredential(resp) {
+          const cred = resp && resp.credential;
+          if (!cred) return toast("Google sign-in was cancelled");
+          try {
+            const r = await fetch("/api/customer/google", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ credential: cred }),
+            });
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) throw new Error(data.error || "Google sign-in failed");
+            if (!data.token) throw new Error("Server did not return a token");
+            user = userAuth._setUserFromGoogle(data);
+            toast("Signed in with Google");
+            location.hash = "#/";
+          } catch (e) {
+            toast(e.message || "Google sign-in failed");
+          }
+        }
 
         const Logo = () =>
           `<a class="logo" href="#/" aria-label="${esc(settings.siteName)} home"><span class="logo-mark">${icon("book", 16)}</span>${esc(settings.siteName)}</a>`;
@@ -1593,8 +1832,8 @@
         };
 
         /* ============================================================
-     BUY / DOWNLOAD — routes both paid AND free items to /pay.html
-  ============================================================ */
+           BUY / DOWNLOAD — routes both paid AND free items to /pay.html
+        ============================================================ */
         function materialAction(m) {
           const wa = settings.whatsapp
             ? `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent("Hi, I want to get: " + m.title)}`
@@ -1613,7 +1852,6 @@
               cls: "btn-accent",
             };
           }
-          /* Free — still go through checkout to collect lead */
           return {
             href: "/pay.html?id=" + encodeURIComponent(m.id),
             label: "Download free PDF",
@@ -1835,16 +2073,26 @@
           return `<section class="page-head"><div class="wrap"><h1>Where PrepShelf is going</h1><p class="lead">What we are building today and what comes next.</p></div></section>
       ${VisionSection()}<section class="section--tight"><div class="wrap">${LeadBox()}</div></section>`;
         }
+
+        /* ============================================================
+           AUTH VIEW — real login/signup with email + Google
+        ============================================================ */
         function viewAuth(mode) {
           const up = mode === "signup";
           setMeta((up ? "Sign up" : "Log in") + ` | ${settings.siteName}`);
-          return `<section class="wrap"><form class="login" data-form="auth" data-mode="${mode}">
+          return `<section class="wrap"><div class="login">
       <h1>${up ? "Create your account" : "Welcome back"}</h1>
-      <div class="callout" style="margin-top:16px">Accounts are coming soon.</div>
-      ${up ? '<div class="field"><label for="au-name">Name</label><input class="input" id="au-name" name="name" required></div>' : ""}
-      <div class="field"><label for="au-email">Email</label><input class="input" id="au-email" type="email" name="email" required></div>
-      <div class="field"><label for="au-pw">Password</label><input class="input" id="au-pw" type="password" name="password" required></div>
-      <button class="btn btn-primary btn-block" type="submit">${up ? "Create account" : "Log in"}</button></form></section>`;
+      <p class="muted" style="margin-top:6px">${up ? "Save your downloads and picks in one place." : "Sign in to continue."}</p>
+      <form data-form="auth" data-mode="${mode}" novalidate>
+        ${up ? '<div class="field"><label for="au-name">Name</label><input class="input" id="au-name" name="name" autocomplete="name" required></div>' : ""}
+        <div class="field"><label for="au-email">Email</label><input class="input" id="au-email" type="email" name="email" autocomplete="email" required></div>
+        <div class="field"><label for="au-pw">Password</label><input class="input" id="au-pw" type="password" name="password" autocomplete="${up ? "new-password" : "current-password"}" required></div>
+        <button class="btn btn-primary btn-block" type="submit">${up ? "Create account" : "Log in"}</button>
+      </form>
+      <div class="auth-divider">or</div>
+      <div class="g-slot" id="g-slot"></div>
+      <p class="login-alt">${up ? 'Already have an account? <a href="#/login">Log in</a>' : 'New here? <a href="#/signup">Create an account</a>'}</p>
+    </div></section>`;
         }
         function viewNotFound() {
           setMeta(`Page not found | ${settings.siteName}`);
@@ -1906,6 +2154,8 @@
           $("#footer").innerHTML = Footer(exams);
           $("#main").innerHTML = html;
           hydrateAds();
+          /* Mount Google button if the auth page rendered */
+          if (document.getElementById("g-slot")) mountGoogle();
           window.scrollTo(0, 0);
         }
         function refreshResults() {
@@ -1941,8 +2191,15 @@
             toast(el.dataset.name + " is coming soon.");
           },
           async signOut() {
+            await userAuth.signOut();
             user = null;
+            toast("Signed out");
             renderRoute();
+          },
+          "google-help"() {
+            toast(
+              "Google sign-in is not configured yet. Add a Client ID in Admin → Security.",
+            );
           },
         };
         document.addEventListener("click", (e) => {
@@ -1979,7 +2236,42 @@
             }
           },
           async auth(form) {
-            toast("Accounts are coming soon");
+            const mode = form.dataset.mode === "signup" ? "signup" : "login";
+            const name =
+              mode === "signup" ? (form.elements.name.value || "").trim() : "";
+            const email = (form.elements.email.value || "")
+              .trim()
+              .toLowerCase();
+            const password = form.elements.password.value || "";
+            const btn = form.querySelector('button[type="submit"]');
+            const orig = btn ? btn.textContent : "";
+
+            if (mode === "signup" && name.length < 2)
+              return toast("Please enter your name");
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+              return toast("Please enter a valid email");
+            if (password.length < 6)
+              return toast("Password must be at least 6 characters");
+
+            if (btn) {
+              btn.disabled = true;
+              btn.textContent = "Please wait…";
+            }
+            try {
+              const u =
+                mode === "signup"
+                  ? await userAuth.signUp(name, email, password)
+                  : await userAuth.signIn(email, password);
+              user = u;
+              toast(mode === "signup" ? "Account created" : "Welcome back");
+              location.hash = "#/";
+            } catch (e) {
+              toast(e.message || "Could not sign you in");
+              if (btn) {
+                btn.disabled = false;
+                btn.textContent = orig;
+              }
+            }
           },
         };
         document.addEventListener("submit", (e) => {
