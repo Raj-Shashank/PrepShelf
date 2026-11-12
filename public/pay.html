@@ -450,6 +450,15 @@
         const tint = (h) =>
           `--tint:hsl(${h || 220} 65% 94%);--tone:hsl(${h || 220} 55% 28%)`;
 
+        const CUSTOMER_TOKEN_KEY = "ps_customer_token";
+        function customerToken() {
+          try {
+            return localStorage.getItem(CUSTOMER_TOKEN_KEY) || "";
+          } catch (e) {
+            return "";
+          }
+        }
+
         const state = {
           material: null,
           exam: null,
@@ -490,9 +499,12 @@
           return r.json();
         }
         async function apiPost(path, body) {
+          const token = customerToken();
+          const headers = { "content-type": "application/json" };
+          if (token) headers.authorization = "Bearer " + token;
           const r = await fetch(path, {
             method: "POST",
-            headers: { "content-type": "application/json" },
+            headers,
             body: JSON.stringify(body),
           });
           const data = await r.json().catch(() => ({}));
@@ -514,7 +526,10 @@
             ]);
             state.settings = settings || {};
             state.material = material;
-            state.paymentsEnabled = !!settings.paymentsEnabled;
+            state.paymentsEnabled = !!(
+              settings.paymentsEnabled ||
+              (settings.razorpay && settings.razorpay.enabled)
+            );
             state.isFree = !(material.price > 0);
 
             if (material.exam) {
@@ -559,9 +574,18 @@
 
         /* ---------- Customer form (shared) ---------- */
         function formHtml() {
+          const loggedIn = !!customerToken();
           return `
       <div class="card">
         <h2>Your details</h2>
+        ${
+          loggedIn
+            ? ""
+            : `<div class="alert" style="margin-bottom:14px;font-size:.88rem">
+          <b>Tip:</b> <a href="/#/login" style="color:var(--blue);font-weight:600">Log in</a>
+          before buying to keep every invoice and download in one place.
+        </div>`
+        }
         <form id="pay-form" novalidate>
           <div class="field">
             <label for="f-name">Full name</label>
@@ -794,6 +818,15 @@
               couponCode: state.coupon || "",
             });
 
+            if (!window.Razorpay) {
+              state.paying = false;
+              btn.disabled = false;
+              btn.innerHTML = "Pay " + fmtINR(state.finalPrice);
+              return toast(
+                "Payment library failed to load. Check your connection and refresh.",
+              );
+            }
+
             const opts = {
               key: order.keyId,
               amount: order.amount,
@@ -917,12 +950,21 @@
 
         function renderSuccess(downloadUrl, paymentId) {
           const isFree = state.isFree;
+          const loggedIn = !!customerToken();
           $("#main").innerHTML = `
       <div class="success-wrap">
         <div class="success-icon">✓</div>
         <h1>${isFree ? "Ready to download" : "Payment successful"}</h1>
         <p>${isFree ? "Your download will start automatically." : "Thank you! Your download should start automatically."}</p>
         <a class="dl-btn" href="${esc(downloadUrl)}" download>${isFree ? "Download your PDF" : "Download your PDF now"}</a>
+        ${
+          loggedIn
+            ? `<p style="margin-top:14px"><a class="btn btn-ghost" href="/#/account">View my purchases &amp; invoices</a></p>`
+            : `<p class="tiny-note" style="margin-top:14px">
+                 <a href="/#/login" style="color:var(--blue);font-weight:600">Log in</a>
+                 before buying to keep every invoice in one place.
+               </p>`
+        }
         ${paymentId ? `<p class="tiny-note">Link valid for 60 minutes. Payment ID: <b>${esc(paymentId)}</b></p>` : `<p class="tiny-note">Link valid for 60 minutes.</p>`}
         <p style="margin-top:20px"><a class="btn btn-ghost" href="/">← Back to home</a></p>
       </div>`;

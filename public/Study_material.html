@@ -32,6 +32,7 @@
         --amber-tint: #fff4dc;
         --green: #11794f;
         --green-tint: #e6f5ee;
+        --red: #c2372b;
         --head:
           "Plus Jakarta Sans", "Noto Sans Devanagari", system-ui, sans-serif;
         --body: "Inter", "Noto Sans Devanagari", system-ui, sans-serif;
@@ -84,86 +85,325 @@
         outline-offset: 2px;
         border-radius: 6px;
       }
+      .ic {
+        flex: none;
+        display: inline-block;
+        vertical-align: -3px;
+      }
       .wrap {
         max-width: 1180px;
         margin: 0 auto;
         padding: 0 var(--gutter);
       }
+
+      /* ============================================================
+         NAVBAR — frosted glass pill + profile dropdown
+      ============================================================ */
       header {
         position: sticky;
         top: 0;
         z-index: 50;
         padding: 12px 0;
       }
+      .glass {
+        background: rgba(255, 255, 255, 0.7);
+        -webkit-backdrop-filter: blur(24px) saturate(1.8);
+        backdrop-filter: blur(24px) saturate(1.8);
+        border: 1px solid rgba(255, 255, 255, 0.82);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.9),
+          inset 0 -1px 0 rgba(22, 35, 59, 0.04),
+          0 20px 50px -28px rgba(22, 35, 59, 0.5);
+      }
       .nav {
         display: flex;
         align-items: center;
-        gap: 18px;
-        height: 56px;
-        padding: 0 8px 0 18px;
+        gap: 16px;
+        height: 64px;
+        padding: 0 10px 0 20px;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.55);
-        -webkit-backdrop-filter: blur(18px) saturate(1.7);
-        backdrop-filter: blur(18px) saturate(1.7);
-        border: 1px solid rgba(255, 255, 255, 0.75);
-        box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.8),
-          0 12px 32px -20px rgba(22, 35, 59, 0.4);
       }
       .logo {
         display: flex;
         align-items: center;
-        gap: 9px;
+        gap: 10px;
         font: 600 1.08rem var(--head);
+        letter-spacing: -0.01em;
+        flex: none;
       }
-      .mark {
-        width: 26px;
-        height: 26px;
-        border-radius: 8px;
+      .logo-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
         background: var(--blue);
         color: #fff;
         display: grid;
         place-items: center;
+        box-shadow: 0 6px 14px -6px rgba(30, 69, 214, 0.55);
       }
-      .links {
+      .nav-links {
+        flex: 1;
         display: flex;
-        gap: 2px;
-        margin-left: 10px;
-      }
-      .links a {
-        padding: 8px 14px;
-        border-radius: 999px;
-        font-weight: 300;
-        font-size: 0.92rem;
-      }
-      .links a:hover {
-        background: rgba(22, 35, 59, 0.06);
-      }
-      .links a.on {
-        font-weight: 500;
-        background: rgba(22, 35, 59, 0.07);
-      }
-      .auth {
-        margin-left: auto;
-        display: flex;
+        justify-content: center;
         gap: 4px;
-        align-items: center;
+        margin: 0;
       }
-      .auth a {
+      .nav-links a {
         padding: 8px 14px;
         border-radius: 999px;
-        font-weight: 300;
-        font-size: 0.9rem;
+        font-weight: 400;
+        font-size: 0.92rem;
+        transition:
+          background 0.18s ease,
+          color 0.18s ease;
       }
-      .auth a:hover {
+      .nav-links a:hover {
         background: rgba(22, 35, 59, 0.06);
       }
-      .auth .dark {
+      .nav-links a.is-current {
+        font-weight: 600;
+        background: rgba(22, 35, 59, 0.08);
+      }
+      .nav-auth {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: none;
+      }
+      .nav-link-btn {
+        padding: 9px 14px;
+        border-radius: 999px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: var(--ink);
+        transition: background 0.18s ease;
+      }
+      .nav-link-btn:hover {
+        background: rgba(22, 35, 59, 0.06);
+      }
+      .nav-signup {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 20px;
+        border-radius: 999px;
+        font-weight: 500;
+        font-size: 0.9rem;
         background: var(--ink);
         color: #fff;
-        font-weight: 400;
-        padding: 8px 16px;
+        border: 0;
+        cursor: pointer;
+        font-family: inherit;
+        box-shadow: 0 8px 18px -12px rgba(22, 35, 59, 0.45);
+        transition:
+          background 0.18s ease,
+          transform 0.15s ease,
+          box-shadow 0.18s ease;
       }
+      .nav-signup:hover {
+        background: #1e2b47;
+        transform: translateY(-1px);
+        box-shadow: 0 12px 22px -14px rgba(22, 35, 59, 0.6);
+      }
+
+      /* ---- profile dropdown ---- */
+      .profile-menu {
+        position: relative;
+      }
+      .profile-trigger {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 4px 14px 4px 4px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+        font-family: inherit;
+        color: var(--ink);
+        transition:
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .profile-trigger:hover {
+        border-color: #c9d2e3;
+        box-shadow: 0 6px 16px -12px rgba(22, 35, 59, 0.3);
+      }
+      .profile-trigger[aria-expanded="true"] {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px var(--blue-tint);
+      }
+      .profile-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--blue), #3b6bf0);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 0.88rem;
+        flex: none;
+      }
+      .profile-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .profile-chevron {
+        color: var(--muted);
+        display: inline-flex;
+        transition: transform 0.2s ease;
+      }
+      .profile-trigger[aria-expanded="true"] .profile-chevron {
+        transform: rotate(180deg);
+      }
+      .profile-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        min-width: 240px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 20px 40px -20px rgba(22, 35, 59, 0.4);
+        padding: 6px;
+        display: none;
+        z-index: 100;
+      }
+      .profile-dropdown.is-open {
+        display: block;
+      }
+      .profile-dropdown-head {
+        padding: 10px 12px 12px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 6px;
+      }
+      .profile-dropdown-name {
+        font-weight: 600;
+        font-size: 0.94rem;
+        color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .profile-dropdown-email {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .profile-dropdown a,
+      .profile-dropdown button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        text-align: left;
+        padding: 10px 12px;
+        border-radius: 9px;
+        font-size: 0.9rem;
+        background: none;
+        border: 0;
+        cursor: pointer;
+        font-family: inherit;
+        color: var(--ink);
+        font-weight: 500;
+        transition: background 0.14s ease;
+      }
+      .profile-dropdown a:hover,
+      .profile-dropdown button:hover {
+        background: var(--paper);
+      }
+      .profile-dropdown a .ic,
+      .profile-dropdown button .ic {
+        color: var(--muted);
+        flex: none;
+      }
+      .profile-dropdown button.signout {
+        color: var(--red);
+      }
+      .profile-dropdown button.signout .ic {
+        color: var(--red);
+      }
+
+      /* ---- menu button + drawer (mobile) ---- */
+      .menu-btn {
+        display: none;
+        margin-left: auto;
+        background: none;
+        border: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        place-items: center;
+        cursor: pointer;
+        transition: background 0.18s ease;
+      }
+      .menu-btn:hover {
+        background: rgba(22, 35, 59, 0.06);
+      }
+      .drawer {
+        display: none;
+        margin-top: 10px;
+        border-radius: 22px;
+        padding: 8px 18px 18px;
+      }
+      .drawer.is-open {
+        display: block;
+      }
+      .drawer > a {
+        display: block;
+        padding: 13px 2px;
+        font-weight: 400;
+        font-size: 1.02rem;
+        border-bottom: 1px solid rgba(22, 35, 59, 0.06);
+        transition: color 0.15s ease;
+        color: var(--ink);
+      }
+      .drawer > a:hover {
+        color: var(--blue);
+      }
+      .drawer-auth {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .drawer-auth > a,
+      .drawer-auth > button {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 11px 16px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.92rem;
+        cursor: pointer;
+        font-family: inherit;
+        border: 1.5px solid transparent;
+        text-decoration: none;
+        background: none;
+        color: var(--ink);
+      }
+      .drawer-auth > .ghost {
+        background: #fff;
+        border-color: var(--line);
+      }
+      .drawer-auth > .dark {
+        background: var(--ink);
+        color: #fff;
+        border-color: var(--ink);
+      }
+
+      /* ============================================================
+         PAGE CONTENT
+      ============================================================ */
       .hero {
         margin-top: -80px;
         padding: 128px 0 28px;
@@ -553,8 +793,16 @@
         transform: translate(-50%, 0);
       }
       @media (max-width: 900px) {
-        .links {
+        .nav-links,
+        .nav-auth {
           display: none;
+        }
+        .menu-btn {
+          display: grid;
+        }
+        .nav {
+          height: 58px;
+          padding: 0 8px 0 18px;
         }
         .selects {
           grid-template-columns: 1fr 1fr;
@@ -574,15 +822,17 @@
           padding: 10px 0;
         }
         .nav {
-          height: 52px;
+          height: 54px;
           padding: 0 6px 0 14px;
+        }
+        .logo-mark {
+          width: 26px;
+          height: 26px;
+          border-radius: 8px;
         }
         .hero {
           margin-top: -72px;
           padding: 104px 0 22px;
-        }
-        .auth a:not(.dark) {
-          display: none;
         }
         .grid {
           grid-template-columns: 1fr 1fr;
@@ -618,10 +868,10 @@
   <body>
     <header>
       <div class="wrap">
-        <div class="nav">
+        <div class="nav glass">
           <a class="logo" href="/">
-            <span class="mark"
-              ><svg
+            <span class="logo-mark">
+              <svg
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -632,21 +882,32 @@
                 stroke-linejoin="round"
               >
                 <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" />
-                <path d="M5 17a3 3 0 0 1 3-3h11" /></svg
-            ></span>
+                <path d="M5 17a3 3 0 0 1 3-3h11" />
+              </svg>
+            </span>
             <span id="siteName">PrepShelf</span>
           </a>
-          <nav class="links" aria-label="Main">
+          <nav class="nav-links" aria-label="Main">
             <a href="/">Home</a>
-            <a class="on" href="/Study_material.html" aria-current="page"
+            <a
+              class="is-current"
+              href="/Study_material.html"
+              aria-current="page"
               >Study material</a
             >
-            <a href="/#/vision">Our vision</a>
           </nav>
-          <div class="auth">
-            <a href="/#/login">Log in</a>
-            <a class="dark" href="/#/signup">Sign up</a>
-          </div>
+          <div class="nav-auth" id="nav-auth"></div>
+          <button
+            class="menu-btn"
+            data-action="toggleNav"
+            aria-label="Open menu"
+            aria-expanded="false"
+          ></button>
+        </div>
+        <div class="drawer glass" id="drawer">
+          <a href="/">Home</a>
+          <a href="/Study_material.html">Study material</a>
+          <div class="drawer-auth" id="drawer-auth"></div>
         </div>
       </div>
     </header>
@@ -720,6 +981,33 @@
       (function () {
         "use strict";
 
+        const CUSTOMER_TOKEN_KEY = "ps_customer_token";
+        let currentUser = null;
+
+        function getToken() {
+          try {
+            return localStorage.getItem(CUSTOMER_TOKEN_KEY) || "";
+          } catch (e) {
+            return "";
+          }
+        }
+        function hasCustomerToken() {
+          return !!getToken();
+        }
+
+        const ICONS = {
+          menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+          close: '<path d="M6 6l12 12M18 6 6 18"/>',
+          "chevron-down": '<path d="m6 9 6 6 6-6"/>',
+          user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>',
+          logout:
+            '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+          receipt:
+            '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6"/><path d="M9 12h6"/>',
+        };
+        const icon = (n, size = 18) =>
+          `<svg class="ic" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[n] || ""}</svg>`;
+
         const DEFAULT_SETTINGS = {
           siteName: "PrepShelf",
           whatsapp: "",
@@ -767,10 +1055,10 @@
                 "'": "&#39;",
               })[c],
           );
-        const safeUrl = (u) =>
-          /^(https?:\/\/|mailto:|tel:)/i.test(String(u || "").trim())
-            ? String(u).trim()
-            : "";
+        const safeUrl = (u) => {
+          const v = String(u || "").trim();
+          return /^(https?:\/\/|mailto:|tel:|\/)/i.test(v) ? v : "";
+        };
         const inr = (n) => "\u20B9" + Number(n || 0).toLocaleString("en-IN");
         const off = (m) =>
           m.mrp > m.price && m.price > 0
@@ -789,6 +1077,102 @@
           t.classList.add("show");
           clearTimeout(toastTimer);
           toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+        }
+
+        async function loadUser() {
+          if (!hasCustomerToken()) return null;
+          try {
+            const r = await fetch("/api/customer/me", {
+              headers: { authorization: "Bearer " + getToken() },
+            });
+            if (!r.ok) {
+              try {
+                localStorage.removeItem(CUSTOMER_TOKEN_KEY);
+              } catch (e) {}
+              return null;
+            }
+            const data = await r.json();
+            return data.user || null;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function renderHeader() {
+          const mb = document.querySelector(".menu-btn");
+          if (mb) mb.innerHTML = icon("menu", 22);
+
+          const authSlot = document.getElementById("nav-auth");
+          const drawerAuth = document.getElementById("drawer-auth");
+          if (!authSlot) return;
+
+          if (currentUser) {
+            const displayName =
+              currentUser.name || currentUser.email || "Account";
+            const initial = displayName.charAt(0).toUpperCase();
+            authSlot.innerHTML =
+              '<div class="profile-menu">' +
+              '<button type="button" class="profile-trigger" data-action="toggleProfile" aria-expanded="false" aria-haspopup="true">' +
+              '<span class="profile-avatar">' +
+              esc(initial) +
+              "</span>" +
+              '<span class="profile-name">' +
+              esc(displayName) +
+              "</span>" +
+              '<span class="profile-chevron">' +
+              icon("chevron-down", 14) +
+              "</span>" +
+              "</button>" +
+              '<div class="profile-dropdown" id="profile-dropdown" role="menu">' +
+              '<div class="profile-dropdown-head">' +
+              '<div class="profile-dropdown-name">' +
+              esc(currentUser.name || "Account") +
+              "</div>" +
+              '<div class="profile-dropdown-email">' +
+              esc(currentUser.email || "") +
+              "</div>" +
+              "</div>" +
+              '<a href="/#/account" role="menuitem">' +
+              icon("user", 16) +
+              "<span>My account</span></a>" +
+              '<a href="/#/account" role="menuitem">' +
+              icon("receipt", 16) +
+              "<span>Purchases &amp; invoices</span></a>" +
+              '<button type="button" class="signout" data-action="signOut" role="menuitem">' +
+              icon("logout", 16) +
+              "<span>Sign out</span></button>" +
+              "</div></div>";
+            if (drawerAuth) {
+              drawerAuth.innerHTML =
+                '<a class="ghost" href="/#/account">My account</a>' +
+                '<button type="button" class="ghost" data-action="signOut">Sign out</button>';
+            }
+          } else {
+            authSlot.innerHTML =
+              '<a class="nav-link-btn" href="/#/login">Log in</a>' +
+              '<a class="nav-signup" href="/#/signup">Sign up</a>';
+            if (drawerAuth) {
+              drawerAuth.innerHTML =
+                '<a class="ghost" href="/#/login">Log in</a>' +
+                '<a class="dark" href="/#/signup">Sign up</a>';
+            }
+          }
+        }
+
+        async function signOut() {
+          const t = getToken();
+          try {
+            await fetch("/api/customer/logout", {
+              method: "POST",
+              headers: t ? { authorization: "Bearer " + t } : {},
+            });
+          } catch (e) {}
+          try {
+            localStorage.removeItem(CUSTOMER_TOKEN_KEY);
+          } catch (e) {}
+          currentUser = null;
+          toast("Signed out");
+          renderHeader();
         }
 
         async function loadData() {
@@ -984,11 +1368,6 @@
               encodeURIComponent("Hi, I want: " + m.title)
             : "";
 
-          /* ============================================================
-       Both free and paid items now route through /pay.html
-       Paid: shows coupon + Razorpay checkout
-       Free: shows "Free" total + Download button, then auto-downloads
-    ============================================================ */
           let href, label;
           if (m.price > 0) {
             label = "Buy for " + inr(m.price);
@@ -1062,6 +1441,31 @@
         }
 
         document.addEventListener("click", (e) => {
+          const actEl = e.target.closest("[data-action]");
+          if (actEl) {
+            const a = actEl.dataset.action;
+            if (a === "toggleNav") {
+              const d = document.getElementById("drawer");
+              if (d) {
+                const open = d.classList.toggle("is-open");
+                actEl.setAttribute("aria-expanded", open ? "true" : "false");
+                actEl.innerHTML = icon(open ? "close" : "menu", 22);
+              }
+              return;
+            }
+            if (a === "toggleProfile") {
+              const dd = document.getElementById("profile-dropdown");
+              if (!dd) return;
+              const open = dd.classList.toggle("is-open");
+              actEl.setAttribute("aria-expanded", open ? "true" : "false");
+              return;
+            }
+            if (a === "signOut") {
+              signOut();
+              return;
+            }
+          }
+
           const c = e.target.closest(".card");
           if (c) return open(c.dataset.id);
           const ch = e.target.closest("[data-exam]");
@@ -1073,7 +1477,16 @@
             $("#dlg").close();
           if (e.target.closest("[data-nolink]"))
             toast("No link added yet. Add one in Admin.");
+
+          const menu = document.querySelector(".profile-menu");
+          const dd = document.getElementById("profile-dropdown");
+          if (dd && menu && !menu.contains(e.target)) {
+            dd.classList.remove("is-open");
+            const trigger = menu.querySelector(".profile-trigger");
+            if (trigger) trigger.setAttribute("aria-expanded", "false");
+          }
         });
+
         $("#q").addEventListener("input", (e) => {
           f.q = e.target.value.trim();
           render();
@@ -1100,8 +1513,21 @@
           render();
         });
 
+        window.addEventListener("storage", async (e) => {
+          if (!e || e.key === CUSTOMER_TOKEN_KEY) {
+            currentUser = await loadUser();
+            renderHeader();
+          }
+        });
+        window.addEventListener("focus", async () => {
+          currentUser = await loadUser();
+          renderHeader();
+        });
+
         (async function init() {
           await loadData();
+          currentUser = await loadUser();
+          renderHeader();
           const opts = (label, list) =>
             '<option value="">' +
             label +

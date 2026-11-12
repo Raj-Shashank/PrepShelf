@@ -1202,15 +1202,12 @@
           if (!r.ok) throw new Error(method + " " + path + " -> " + r.status);
           return r.json();
         }
-        /* Try several endpoints, return the path that worked (or ""). */
         async function apiTry(method, paths, body) {
           for (let i = 0; i < paths.length; i++) {
             try {
               await apiSend(method, paths[i], body);
               return paths[i];
-            } catch (e) {
-              /* keep trying */
-            }
+            } catch (e) {}
           }
           return "";
         }
@@ -1266,6 +1263,16 @@
         const LANGUAGES = ["English", "Hindi", "Bilingual"];
         const GOV_GROUP = "Government exams";
 
+        const AD_SLOT_DEFAULTS = {
+          kind: "adsense",
+          slotId: "",
+          image: "",
+          link: "",
+          width: "",
+          height: "",
+          alt: "",
+        };
+
         const DEFAULT_SETTINGS = {
           siteName: "PrepShelf",
           tagline: "Study material for government exams and career prep.",
@@ -1288,10 +1295,10 @@
             clientId: "",
             placeholders: false,
             slots: {
-              "home-mid": "",
-              "list-top": "",
-              "detail-side": "",
-              "detail-bottom": "",
+              "home-mid": Object.assign({}, AD_SLOT_DEFAULTS),
+              "list-top": Object.assign({}, AD_SLOT_DEFAULTS),
+              "detail-side": Object.assign({}, AD_SLOT_DEFAULTS),
+              "detail-bottom": Object.assign({}, AD_SLOT_DEFAULTS),
             },
           },
           razorpay: { enabled: false, keyId: "" },
@@ -1315,6 +1322,27 @@
           },
           materialsPage: { title: "Study material", text: "" },
         };
+
+        /* ============ ADS NORMALISER (backwards compatible) ============ */
+        function normalizeAdSlot(v) {
+          if (typeof v === "string") {
+            return Object.assign({}, AD_SLOT_DEFAULTS, { slotId: v });
+          }
+          return Object.assign({}, AD_SLOT_DEFAULTS, v || {});
+        }
+        function normalizeAds(settings) {
+          const ads = (settings.ads = settings.ads || {});
+          ads.slots = ads.slots || {};
+          Object.keys(ads.slots).forEach((k) => {
+            ads.slots[k] = normalizeAdSlot(ads.slots[k]);
+          });
+          // Ensure every known slot exists
+          Object.keys(DEFAULT_SETTINGS.ads.slots).forEach((k) => {
+            if (!ads.slots[k])
+              ads.slots[k] = Object.assign({}, AD_SLOT_DEFAULTS);
+          });
+          return settings;
+        }
 
         /* ============ UTILITIES ============ */
         const $ = (s, r) => (r || document).querySelector(s);
@@ -1569,6 +1597,8 @@
           leads: [],
           coupons: [],
           orders: [],
+          customers: [],
+          paymentsEnabled: false,
           settings: null,
           matQ: "",
           matTrack: "",
@@ -1583,13 +1613,13 @@
           state.materials = all.materials || [];
           state.leads = all.leads || [];
           state.coupons = all.coupons || [];
-          state.settings = deepMerge(
-            clone(DEFAULT_SETTINGS),
-            all.settings || {},
+          state.customers = all.customers || [];
+          state.paymentsEnabled = !!all.paymentsEnabled;
+          state.settings = normalizeAds(
+            deepMerge(clone(DEFAULT_SETTINGS), all.settings || {}),
           );
           try {
             const raw = await apiGet("/api/payments");
-            /* Filter out orders that were deleted locally */
             state.orders = (raw || []).filter(
               (o) => !isOrderDeletedLocally(orderKeyFor(o)),
             );
@@ -2082,6 +2112,9 @@
             paidOrders +
             "</b><span>Paid orders</span></div>" +
             '<div class="stat"><b>' +
+            (state.customers || []).length +
+            "</b><span>Customer accounts</span></div>" +
+            '<div class="stat"><b>' +
             fmtINR(revenue) +
             "</b><span>Revenue</span></div></div>" +
             '<div class="an-grid">' +
@@ -2132,6 +2165,7 @@
             '<button class="btn btn-ghost" data-act="new-track">Add track</button>' +
             '<button class="btn btn-ghost" data-act="new-coupon">Add coupon</button>' +
             '<button class="btn btn-ghost" data-nav="orders">View orders</button>' +
+            '<button class="btn btn-ghost" data-nav="customers">View customers</button>' +
             '<button class="btn btn-ghost" data-nav="home">Edit home page</button>' +
             '<button class="btn btn-ghost" data-nav="contact">Contact &amp; brand</button></div></div>'
           );
@@ -2573,7 +2607,7 @@
         }
 
         function viewPayment() {
-          const rz = state.settings.razorpay || { enabled: false, keyId: "" };
+          const enabled = !!state.paymentsEnabled;
           return (
             pageHead(
               "Payment — Razorpay",
@@ -2583,23 +2617,23 @@
             '<div class="card">' +
             "<h2>Razorpay status</h2>" +
             '<div class="toggle-row ' +
-            (rz.enabled ? "on" : "") +
+            (enabled ? "on" : "") +
             '">' +
             '<div><div class="tlabel">' +
-            (rz.enabled ? "Razorpay is ON" : "Razorpay is OFF") +
+            (enabled ? "Razorpay is ON" : "Razorpay is OFF") +
             "</div>" +
             '<div class="tdesc">' +
-            (rz.enabled
+            (enabled
               ? "Customers can pay through the built-in checkout at /pay.html."
-              : "Buy buttons fall back to the external payment link or WhatsApp.") +
+              : "Buy buttons are disabled until the server sees both Razorpay keys.") +
             "</div></div>" +
             '<span class="badge ' +
-            (rz.enabled ? "badge--green" : "badge--amber") +
+            (enabled ? "badge--green" : "badge--amber") +
             '">' +
-            (rz.enabled ? "Enabled" : "Disabled") +
+            (enabled ? "Enabled" : "Disabled") +
             "</span>" +
             "</div>" +
-            '<p class="hint" style="margin-top:12px">Change <b>RAZORPAY_KEY_ID</b> in .env and restart the server to turn this on or off.</p>' +
+            '<p class="hint" style="margin-top:12px">This value comes from the server at load time. It cannot be turned on from this panel.</p>' +
             "</div>"
           );
         }
@@ -2830,82 +2864,217 @@
           );
         }
 
-        function viewAds() {
-          const a = state.settings.ads;
+        /* ---------------- CUSTOMERS ---------------- */
+        function viewCustomers() {
+          const rows = state.customers || [];
+          const body = rows.length
+            ? rows
+                .map(
+                  (c) =>
+                    "<tr>" +
+                    "<td><b>" +
+                    esc(c.name || "—") +
+                    '</b><div class="muted tiny">' +
+                    esc(c.id) +
+                    "</div></td>" +
+                    "<td>" +
+                    esc(c.email || "—") +
+                    "</td>" +
+                    "<td>" +
+                    esc(c.provider || "password") +
+                    "</td>" +
+                    "<td>" +
+                    esc(fmtDate(c.createdAt)) +
+                    "</td>" +
+                    "<td>" +
+                    esc(fmtDate(c.lastLoginAt)) +
+                    "</td>" +
+                    '<td class="actions"><button class="btn btn-ghost btn-sm" data-act="view-customer" data-id="' +
+                    esc(c.id) +
+                    '">Purchases</button></td></tr>',
+                )
+                .join("")
+            : '<tr><td colspan="6" class="muted" style="text-align:center;padding:34px">No customer accounts yet. Sign-ups from the site appear here.</td></tr>';
+
           return (
-            pageHead("Ads", "Google AdSense. Leave off while you design.") +
-            '<form class="card" data-form="settings"><div class="form">' +
+            pageHead(
+              "Customers",
+              rows.length +
+                " registered customer account(s). Sign-ups from the site are listed here.",
+              '<button class="btn btn-ghost" data-act="export-customer-accounts-csv">Download accounts (CSV)</button>',
+            ) +
+            '<div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Sign-in</th><th>Joined</th><th>Last login</th><th></th></tr></thead><tbody>' +
+            body +
+            "</tbody></table></div>"
+          );
+        }
+
+        function viewAds() {
+          const a = state.settings.ads || {};
+          const slots = a.slots || {};
+          const keys = ["home-mid", "list-top", "detail-side", "detail-bottom"];
+
+          const slotCards = keys
+            .map((key) => {
+              const v = normalizeAdSlot(slots[key]);
+              return (
+                '<div class="card"><h2>Slot: ' +
+                esc(key) +
+                '</h2><div class="form">' +
+                fld({
+                  name: "ads.slots." + key + ".kind",
+                  label: "Type",
+                  type: "select",
+                  value: v.kind,
+                  opts: [
+                    { value: "adsense", label: "Google AdSense" },
+                    {
+                      value: "image",
+                      label: "Image banner (link + width + height)",
+                    },
+                  ],
+                }) +
+                fld({
+                  name: "ads.slots." + key + ".slotId",
+                  label: "AdSense slot ID",
+                  value: v.slotId,
+                  hint: "Only for AdSense type",
+                }) +
+                fld({
+                  name: "ads.slots." + key + ".image",
+                  label: "Image URL",
+                  value: v.image,
+                  full: true,
+                  hint: "/uploads/... or https://...",
+                }) +
+                fld({
+                  name: "ads.slots." + key + ".link",
+                  label: "Click-through link",
+                  value: v.link,
+                  full: true,
+                  hint: "Opens in a new tab. Optional.",
+                }) +
+                fld({
+                  name: "ads.slots." + key + ".width",
+                  label: "Image width (px)",
+                  type: "number",
+                  value: v.width,
+                }) +
+                fld({
+                  name: "ads.slots." + key + ".height",
+                  label: "Image height (px)",
+                  type: "number",
+                  value: v.height,
+                }) +
+                fld({
+                  name: "ads.slots." + key + ".alt",
+                  label: "Alt text",
+                  value: v.alt,
+                  full: true,
+                }) +
+                "</div></div>"
+              );
+            })
+            .join("");
+
+          return (
+            pageHead(
+              "Ads",
+              "Google AdSense or your own image banners. Image ads work even when AdSense is off.",
+            ) +
+            '<form data-form="settings">' +
+            '<div class="card"><h2>Global</h2><div class="form">' +
             fld({
               name: "ads.enabled",
-              label: "Turn ads on",
+              label: "Enable AdSense",
               type: "checkbox",
               value: a.enabled,
               full: true,
             }) +
             fld({
               name: "ads.placeholders",
-              label: "Show dashed placeholder boxes",
+              label: "Show dashed placeholders",
               type: "checkbox",
               value: a.placeholders,
               full: true,
             }) +
             fld({
               name: "ads.clientId",
-              label: "Publisher ID",
+              label: "AdSense publisher ID",
               value: a.clientId,
               ph: "ca-pub-1234567890123456",
               full: true,
             }) +
-            fld({
-              name: "ads.slots.home-mid",
-              label: "Slot: home page, middle",
-              value: a.slots["home-mid"],
-            }) +
-            fld({
-              name: "ads.slots.list-top",
-              label: "Slot: top of lists",
-              value: a.slots["list-top"],
-            }) +
-            fld({
-              name: "ads.slots.detail-side",
-              label: "Slot: detail page sidebar",
-              value: a.slots["detail-side"],
-            }) +
-            fld({
-              name: "ads.slots.detail-bottom",
-              label: "Slot: detail page bottom",
-              value: a.slots["detail-bottom"],
-            }) +
-            '</div><div class="form-actions left"><button class="btn btn-primary" type="submit">Save ads</button></div></form>'
+            "</div></div>" +
+            slotCards +
+            '<div class="form-actions"><button class="btn btn-primary" type="submit">Save ads</button></div>' +
+            "</form>"
           );
         }
 
         function viewLeads() {
-          const rows = state.leads;
-          const body = rows.length
-            ? rows
+          const customers = state.customers || [];
+          const leads = state.leads || [];
+
+          const customerRows = customers.length
+            ? customers
+                .map(
+                  (c) =>
+                    "<tr>" +
+                    "<td><b>" +
+                    esc(c.name || "—") +
+                    "</b></td>" +
+                    "<td>" +
+                    esc(c.email || "—") +
+                    "</td>" +
+                    "<td>" +
+                    esc(c.provider || "password") +
+                    "</td>" +
+                    "<td>" +
+                    esc(fmtDate(c.createdAt)) +
+                    "</td>" +
+                    '<td class="actions"><button class="btn btn-ghost btn-sm" data-act="view-customer" data-id="' +
+                    esc(c.id) +
+                    '">Purchases</button></td></tr>',
+                )
+                .join("")
+            : '<tr><td colspan="5" class="muted" style="text-align:center;padding:24px">No accounts yet.</td></tr>';
+
+          const leadRows = leads.length
+            ? leads
                 .map(
                   (l) =>
                     "<tr><td>" +
                     esc(l.contact) +
                     "</td><td>" +
                     esc(String(l.createdAt || "").slice(0, 10)) +
-                    "</td>" +
-                    '<td class="actions"><button class="btn btn-ghost btn-sm btn-danger" data-act="del-lead" data-id="' +
+                    '</td><td class="actions"><button class="btn btn-ghost btn-sm btn-danger" data-act="del-lead" data-id="' +
                     esc(l.id) +
                     '">Delete</button></td></tr>',
                 )
                 .join("")
-            : '<tr><td colspan="3" class="muted" style="text-align:center;padding:34px">No sign-ups yet.</td></tr>';
+            : '<tr><td colspan="3" class="muted" style="text-align:center;padding:24px">No notify-me sign-ups yet.</td></tr>';
+
           return (
             pageHead(
-              "Sign-ups",
-              "Contacts collected from the Notify me form.",
-              '<button class="btn btn-ghost" data-act="export-csv">Download CSV</button><button class="btn btn-ghost btn-danger" data-act="clear-leads">Delete all</button>',
+              "Customers & sign-ups",
+              "Accounts created on the site, plus contacts from the Notify me form.",
+              '<button class="btn btn-ghost" data-act="export-customer-accounts-csv">Accounts CSV</button>' +
+                '<button class="btn btn-ghost" data-act="export-csv">Notify-me CSV</button>' +
+                '<button class="btn btn-ghost btn-danger" data-act="clear-leads">Delete notify-me</button>',
             ) +
+            '<div class="card"><h2>Customer accounts (' +
+            customers.length +
+            ")</h2>" +
+            '<div class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Email</th><th>Sign-in</th><th>Joined</th><th></th></tr></thead><tbody>' +
+            customerRows +
+            "</tbody></table></div></div>" +
+            '<div class="card"><h2>Notify me contacts (' +
+            leads.length +
+            ")</h2>" +
             '<div class="table-wrap"><table class="table" style="min-width:420px"><thead><tr><th>Contact</th><th>Date</th><th></th></tr></thead><tbody>' +
-            body +
-            "</tbody></table></div>"
+            leadRows +
+            "</tbody></table></div></div>"
           );
         }
 
@@ -3120,6 +3289,7 @@
           payment: viewPayment,
           coupons: viewCoupons,
           orders: viewOrders,
+          customers: viewCustomers,
           leads: viewLeads,
           backup: viewBackup,
           security: viewSecurity,
@@ -3147,6 +3317,7 @@
             group: "People",
             items: [
               ["orders", "Orders & sales", "card"],
+              ["customers", "Customers", "users"],
               ["leads", "Sign-ups", "users"],
             ],
           },
@@ -3771,7 +3942,88 @@
             render();
             toast("All sign-ups deleted");
           },
-          /* ---------- orders ---------- */
+          async "view-customer"(el) {
+            const id = el.dataset.id;
+            const user = (state.customers || []).find((c) => c.id === id);
+            if (!user) return toast("Customer not found");
+            let orders = [];
+            try {
+              orders = await apiGet(
+                "/api/admin/customers/" + encodeURIComponent(id) + "/orders",
+              );
+            } catch (e) {
+              toast("Could not load purchases");
+            }
+            const rows = orders.length
+              ? orders
+                  .map(
+                    (o) =>
+                      "<tr>" +
+                      "<td>" +
+                      esc(o.materialTitle || o.materialId || "—") +
+                      "</td>" +
+                      "<td>" +
+                      (Number(o.finalAmount) > 0
+                        ? fmtINR(o.finalAmount)
+                        : "Free") +
+                      "</td>" +
+                      "<td>" +
+                      esc(o.status || "") +
+                      "</td>" +
+                      "<td>" +
+                      esc(fmtDate(o.paidAt || o.createdAt)) +
+                      "</td>" +
+                      "</tr>",
+                  )
+                  .join("")
+              : '<tr><td colspan="4" class="muted" style="text-align:center;padding:24px">No purchases yet.</td></tr>';
+            const m = getModal();
+            m.innerHTML =
+              '<div class="inv-wrap">' +
+              "<h2>" +
+              esc(user.name || "—") +
+              "</h2>" +
+              '<p class="muted">' +
+              esc(user.email || "") +
+              "</p>" +
+              '<div class="table-wrap" style="margin-top:14px"><table class="table"><thead><tr><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>' +
+              rows +
+              "</tbody></table></div>" +
+              '<div class="inv-actions"><button class="btn btn-ghost" data-act="close-modal">Close</button></div></div>';
+            m.showModal();
+          },
+          "export-customer-accounts-csv"() {
+            const rows = state.customers || [];
+            if (!rows.length) return toast("No customer accounts");
+            const headers = [
+              "Name",
+              "Email",
+              "Sign-in",
+              "Joined",
+              "Last login",
+            ];
+            const csv = [headers.join(",")]
+              .concat(
+                rows.map((c) =>
+                  [
+                    c.name || "",
+                    c.email || "",
+                    c.provider || "",
+                    c.createdAt || "",
+                    c.lastLoginAt || "",
+                  ]
+                    .map((v) => '"' + String(v).replace(/"/g, '""') + '"')
+                    .join(","),
+                ),
+              )
+              .join("\n");
+            download(
+              "prepshelf-customers-" + today() + ".csv",
+              csv,
+              "text/csv",
+            );
+            toast("Accounts exported");
+          },
           "view-invoice"(el) {
             openInvoice(el.dataset.id);
           },
@@ -3814,17 +4066,13 @@
               )
             )
               return;
-
-            /* 1. Try to delete on the server (several possible endpoint shapes) */
             const done = await apiTry("DELETE", [
               "/api/payments/" + encodeURIComponent(id),
               "/api/orders/" + encodeURIComponent(id),
               "/api/payment/" + encodeURIComponent(id),
               "/api/admin/orders/" + encodeURIComponent(id),
             ]);
-
             if (done) {
-              /* Server accepted — remove from local state and re-render */
               state.orders = state.orders.filter(
                 (x) => String(orderKey(x)) !== String(id),
               );
@@ -3832,8 +4080,6 @@
               toast("Order deleted");
               return;
             }
-
-            /* 2. Fallback: hide it locally on this device */
             markOrderDeletedLocally(id);
             state.orders = state.orders.filter(
               (x) => String(orderKey(x)) !== String(id),
@@ -4166,6 +4412,7 @@
             if (patch.bundle && typeof patch.bundle.enabled !== "undefined")
               patch.bundle.enabled = !!patch.bundle.enabled;
             const merged = deepMerge(clone(state.settings), patch);
+            normalizeAds(merged);
             await apiSend("PUT", "/api/settings", merged);
             state.settings = merged;
             render();

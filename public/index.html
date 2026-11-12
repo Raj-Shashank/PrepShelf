@@ -22,7 +22,6 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
-    <!-- Google Identity Services (for Sign in with Google) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
       :root {
@@ -288,6 +287,10 @@
         flex-direction: column;
         gap: 6px;
       }
+
+      /* ============================================================
+         NAVBAR — frosted glass pill + profile dropdown
+      ============================================================ */
       .site-header {
         position: sticky;
         top: 0;
@@ -296,81 +299,228 @@
         pointer-events: none;
       }
       .glass {
-        background: rgba(255, 255, 255, 0.55);
-        -webkit-backdrop-filter: blur(18px) saturate(1.7);
-        backdrop-filter: blur(18px) saturate(1.7);
-        border: 1px solid rgba(255, 255, 255, 0.75);
+        background: rgba(255, 255, 255, 0.7);
+        -webkit-backdrop-filter: blur(24px) saturate(1.8);
+        backdrop-filter: blur(24px) saturate(1.8);
+        border: 1px solid rgba(255, 255, 255, 0.82);
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.8),
-          0 12px 32px -20px rgba(22, 35, 59, 0.4);
+          inset 0 1px 0 rgba(255, 255, 255, 0.9),
+          inset 0 -1px 0 rgba(22, 35, 59, 0.04),
+          0 20px 50px -28px rgba(22, 35, 59, 0.5);
       }
       .nav {
         pointer-events: auto;
         display: flex;
         align-items: center;
-        gap: 18px;
-        height: 56px;
-        padding: 0 8px 0 18px;
+        gap: 16px;
+        height: 64px;
+        padding: 0 10px 0 20px;
         border-radius: 999px;
       }
       .logo {
         display: flex;
         align-items: center;
-        gap: 9px;
+        gap: 10px;
         font-family: var(--font-head);
         font-weight: 600;
         font-size: 1.08rem;
         letter-spacing: -0.01em;
+        flex: none;
       }
       .logo-mark {
-        width: 26px;
-        height: 26px;
-        border-radius: 8px;
+        width: 28px;
+        height: 28px;
+        border-radius: 9px;
         background: var(--blue);
         color: #fff;
         display: grid;
         place-items: center;
+        box-shadow: 0 6px 14px -6px rgba(30, 69, 214, 0.55);
       }
       .nav-links {
+        flex: 1;
         display: flex;
-        gap: 2px;
-        margin-left: 10px;
+        justify-content: center;
+        gap: 4px;
+        margin: 0;
       }
       .nav-links a,
       .nav-link-btn {
         padding: 8px 14px;
         border-radius: 999px;
-        font-weight: 300;
+        font-weight: 400;
         font-size: 0.92rem;
         background: none;
         border: 0;
         cursor: pointer;
+        color: var(--ink);
+        transition:
+          background 0.18s ease,
+          color 0.18s ease;
       }
       .nav-links a:hover,
       .nav-link-btn:hover {
         background: rgba(22, 35, 59, 0.06);
       }
       .nav-links a.is-current {
-        font-weight: 500;
-        background: rgba(22, 35, 59, 0.07);
+        font-weight: 600;
+        background: rgba(22, 35, 59, 0.08);
       }
       .nav-auth {
-        margin-left: auto;
         display: flex;
         align-items: center;
-        gap: 4px;
-      }
-      .nav-user {
-        font-weight: 300;
-        font-size: 0.9rem;
-        padding: 0 8px;
+        gap: 8px;
+        flex: none;
       }
       .nav-auth .btn {
-        padding: 8px 16px;
-        font-weight: 400;
+        padding: 9px 20px;
+        font-weight: 500;
         font-size: 0.9rem;
         border-radius: 999px;
+        box-shadow: 0 8px 18px -12px rgba(22, 35, 59, 0.45);
+        transition:
+          background 0.18s ease,
+          transform 0.15s ease,
+          box-shadow 0.18s ease;
       }
+      .nav-auth .btn-dark:hover {
+        background: #1e2b47;
+        transform: translateY(-1px);
+        box-shadow: 0 12px 22px -14px rgba(22, 35, 59, 0.6);
+      }
+      .nav-auth .nav-link-btn {
+        padding: 9px 14px;
+        font-weight: 500;
+      }
+
+      /* ---- profile dropdown ---- */
+      .profile-menu {
+        position: relative;
+      }
+      .profile-trigger {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 4px 14px 4px 4px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+        font-family: inherit;
+        color: var(--ink);
+        transition:
+          background 0.15s ease,
+          border-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .profile-trigger:hover {
+        border-color: #c9d2e3;
+        box-shadow: 0 6px 16px -12px rgba(22, 35, 59, 0.3);
+      }
+      .profile-trigger[aria-expanded="true"] {
+        border-color: var(--blue);
+        box-shadow: 0 0 0 3px var(--blue-tint);
+      }
+      .profile-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--blue), #3b6bf0);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 0.88rem;
+        flex: none;
+        letter-spacing: 0;
+      }
+      .profile-name {
+        font-weight: 500;
+        font-size: 0.9rem;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .profile-chevron {
+        color: var(--muted);
+        display: inline-flex;
+        transition: transform 0.2s ease;
+      }
+      .profile-trigger[aria-expanded="true"] .profile-chevron {
+        transform: rotate(180deg);
+      }
+      .profile-dropdown {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        min-width: 240px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 20px 40px -20px rgba(22, 35, 59, 0.4);
+        padding: 6px;
+        display: none;
+        z-index: 100;
+      }
+      .profile-dropdown.is-open {
+        display: block;
+      }
+      .profile-dropdown-head {
+        padding: 10px 12px 12px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 6px;
+      }
+      .profile-dropdown-name {
+        font-weight: 600;
+        font-size: 0.94rem;
+        color: var(--ink);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .profile-dropdown-email {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .profile-dropdown a,
+      .profile-dropdown button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        text-align: left;
+        padding: 10px 12px;
+        border-radius: 9px;
+        font-size: 0.9rem;
+        background: none;
+        border: 0;
+        cursor: pointer;
+        font-family: inherit;
+        color: var(--ink);
+        font-weight: 500;
+        transition: background 0.14s ease;
+      }
+      .profile-dropdown a:hover,
+      .profile-dropdown button:hover {
+        background: var(--paper);
+      }
+      .profile-dropdown a .ic,
+      .profile-dropdown button .ic {
+        color: var(--muted);
+        flex: none;
+      }
+      .profile-dropdown button.signout {
+        color: var(--red);
+      }
+      .profile-dropdown button.signout .ic {
+        color: var(--red);
+      }
+
       .menu-btn {
         display: none;
         margin-left: auto;
@@ -381,13 +531,17 @@
         border-radius: 50%;
         place-items: center;
         cursor: pointer;
+        transition: background 0.18s ease;
+      }
+      .menu-btn:hover {
+        background: rgba(22, 35, 59, 0.06);
       }
       .drawer {
         display: none;
         pointer-events: auto;
-        margin-top: 8px;
+        margin-top: 10px;
         border-radius: 22px;
-        padding: 6px 18px 18px;
+        padding: 8px 18px 18px;
       }
       .drawer.is-open {
         display: block;
@@ -395,9 +549,13 @@
       .drawer > a {
         display: block;
         padding: 13px 2px;
-        font-weight: 300;
+        font-weight: 400;
         font-size: 1.02rem;
-        border-bottom: 1px solid rgba(22, 35, 59, 0.08);
+        border-bottom: 1px solid rgba(22, 35, 59, 0.06);
+        transition: color 0.15s ease;
+      }
+      .drawer > a:hover {
+        color: var(--blue);
       }
       .drawer-auth {
         display: flex;
@@ -407,6 +565,7 @@
       .drawer-auth > * {
         flex: 1;
       }
+
       .is-home .site-header {
         margin-bottom: -80px;
       }
@@ -802,57 +961,175 @@
         font-size: 2.2rem;
         display: block;
       }
+
+      /* ============================================================
+         VISION — bold blue quote block (home page)
+      ============================================================ */
       .vision {
-        background: var(--paper);
-        border-block: 1px solid var(--line);
+        position: relative;
+        background: var(--blue);
+        color: #fff;
+        padding: 96px 0;
+        overflow: hidden;
       }
-      .vision-grid {
-        display: grid;
-        grid-template-columns: 1.1fr 0.9fr;
-        gap: 56px;
-        align-items: start;
+      .vision::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          60% 100% at 80% 20%,
+          rgba(255, 255, 255, 0.08),
+          transparent 60%
+        );
+        pointer-events: none;
       }
-      .vision h2 {
-        font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+      .vision-inner {
+        position: relative;
+        max-width: 940px;
+        margin: 0 auto;
+      }
+      .vision-label {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-family: var(--font-body);
         font-weight: 600;
-        margin-bottom: 16px;
-        max-width: 17ch;
+        font-size: 0.72rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.65);
+        margin-bottom: 24px;
       }
-      .pillars {
+      .vision-label::before {
+        content: "";
+        width: 28px;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.4);
+        flex: none;
+      }
+      .vision-title {
+        font-family: var(--font-head);
+        font-weight: 600;
+        font-size: clamp(1.85rem, 4.4vw, 3.2rem);
+        line-height: 1.14;
+        letter-spacing: -0.025em;
+        margin: 0 0 22px;
+        color: #fff;
+        max-width: 20ch;
+      }
+      .vision-title em {
+        font-style: normal;
+        color: var(--amber);
+      }
+      .vision-lede {
+        font-size: clamp(1rem, 1.5vw, 1.15rem);
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.78);
+        max-width: 62ch;
+        margin-bottom: 48px;
+      }
+      .vision-pillars {
         display: grid;
-        gap: 20px;
-        margin-top: 32px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 28px;
+        margin-bottom: 48px;
+        padding-bottom: 48px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
       }
-      .roadmap {
+      .vision-pillar {
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 12px;
+      }
+      .vision-pillar-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--amber);
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+      .vision-pillar b {
+        display: block;
+        font-family: var(--font-head);
+        font-weight: 700;
+        font-size: 1.02rem;
+        color: #fff;
+        letter-spacing: -0.01em;
+        line-height: 1.25;
+      }
+      .vision-pillar-text {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.72);
+        line-height: 1.55;
+      }
+      .vision-road {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
         list-style: none;
         padding: 0;
         margin: 0;
       }
-      .road {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        padding: 22px 24px;
+      .vision-road-item {
+        padding: 20px 22px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
       }
-      .road h3 {
-        font-size: 1.15rem;
-        font-weight: 600;
-        margin: 10px 0 6px;
+      .vision-road-item.is-now {
+        background: rgba(242, 162, 12, 0.14);
+        border-color: rgba(242, 162, 12, 0.4);
       }
-      .road p {
-        color: var(--muted);
-        font-size: 0.94rem;
+      .vision-road-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--amber);
+        margin-bottom: 10px;
       }
-      .road.is-live {
-        border-color: var(--blue);
+      .vision-road-item.is-now .vision-road-tag::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--amber);
+        animation: vision-pulse 2s ease-in-out infinite;
       }
-      .road.is-later {
-        background: transparent;
-        border-style: dashed;
+      @keyframes vision-pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.55;
+          transform: scale(1.25);
+        }
       }
+      .vision-road-item b {
+        display: block;
+        font-family: var(--font-head);
+        font-weight: 700;
+        font-size: 1rem;
+        color: #fff;
+        letter-spacing: -0.01em;
+        line-height: 1.3;
+        margin-bottom: 6px;
+      }
+      .vision-road-item p {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.68);
+        line-height: 1.5;
+        margin: 0;
+      }
+
       .lead-box {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -1171,6 +1448,7 @@
         padding: 14px 16px;
         font-size: 0.92rem;
       }
+
       @media (max-width: 1024px) {
         .hero-grid {
           grid-template-columns: 1fr;
@@ -1216,9 +1494,12 @@
         .menu-btn {
           display: grid;
         }
+        .nav {
+          height: 58px;
+          padding: 0 8px 0 18px;
+        }
         .bundle,
-        .lead-box,
-        .vision-grid {
+        .lead-box {
           grid-template-columns: 1fr;
         }
         .bundle {
@@ -1227,6 +1508,21 @@
         .benefits {
           grid-template-columns: 1fr;
           gap: 20px;
+        }
+        .vision {
+          padding: 72px 0;
+        }
+        .vision-pillars {
+          grid-template-columns: 1fr;
+          gap: 24px;
+          margin-bottom: 36px;
+          padding-bottom: 36px;
+        }
+        .vision-road {
+          grid-template-columns: 1fr;
+        }
+        .vision-lede {
+          margin-bottom: 36px;
         }
       }
       @media (max-width: 640px) {
@@ -1240,11 +1536,16 @@
           padding: 10px 0;
         }
         .nav {
-          height: 52px;
+          height: 54px;
           padding: 0 6px 0 14px;
         }
+        .logo-mark {
+          width: 26px;
+          height: 26px;
+          border-radius: 8px;
+        }
         .is-home .site-header {
-          margin-bottom: -72px;
+          margin-bottom: -74px;
         }
         .hero {
           padding: 108px 0 40px;
@@ -1276,9 +1577,61 @@
           padding: 16px;
           gap: 12px;
         }
+        .vision {
+          padding: 56px 0;
+        }
+        .vision-title {
+          font-size: 1.65rem;
+        }
+
+        /* ---- Material cards: 2-column like tracks ---- */
+        .m-grid {
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+        .m-card .cover {
+          min-height: 110px;
+          padding: 14px 12px 12px 24px;
+        }
+        .m-card .cover::before {
+          left: 11px;
+        }
+        .m-card .cover-exam {
+          font-size: 1.5rem;
+        }
+        .m-card .cover-type {
+          font-size: 0.72rem;
+        }
+        .m-card .m-body {
+          padding: 12px;
+          gap: 8px;
+        }
+        .m-card .m-title {
+          font-size: 0.95rem;
+        }
+        .m-card .price {
+          font-size: 1.1rem;
+        }
+        .m-card .mrp {
+          font-size: 0.82rem;
+        }
+        .m-card .m-meta {
+          gap: 4px;
+        }
+        .m-card .m-meta .badge {
+          font-size: 0.7rem;
+          padding: 2px 6px;
+        }
+        .m-card .badge--green {
+          font-size: 0.7rem;
+          padding: 2px 6px;
+        }
       }
       @media (max-width: 380px) {
         .exam-grid {
+          grid-template-columns: 1fr;
+        }
+        .m-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -1304,6 +1657,16 @@
         ];
         const GOV_GROUP = "Government exams";
 
+        const AD_SLOT_DEFAULTS = {
+          kind: "adsense",
+          slotId: "",
+          image: "",
+          link: "",
+          width: "",
+          height: "",
+          alt: "",
+        };
+
         const DEFAULT_SETTINGS = {
           siteName: "PrepShelf",
           tagline: "Study material for government exams and career prep.",
@@ -1326,10 +1689,10 @@
             clientId: "",
             placeholders: false,
             slots: {
-              "home-mid": "",
-              "list-top": "",
-              "detail-side": "",
-              "detail-bottom": "",
+              "home-mid": Object.assign({}, AD_SLOT_DEFAULTS),
+              "list-top": Object.assign({}, AD_SLOT_DEFAULTS),
+              "detail-side": Object.assign({}, AD_SLOT_DEFAULTS),
+              "detail-bottom": Object.assign({}, AD_SLOT_DEFAULTS),
             },
           },
           google: { clientId: "" },
@@ -1379,10 +1742,10 @@
                 "'": "&#39;",
               })[c],
           );
-        const safeUrl = (u) =>
-          /^(https?:\/\/|mailto:|tel:)/i.test(String(u || "").trim())
-            ? String(u).trim()
-            : "";
+        const safeUrl = (u) => {
+          const v = String(u || "").trim();
+          return /^(https?:\/\/|mailto:|tel:|\/)/i.test(v) ? v : "";
+        };
         const fmtINR = (n) => "\u20B9" + Number(n || 0).toLocaleString("en-IN");
         const discount = (m) =>
           m.mrp > m.price && m.price > 0
@@ -1404,9 +1767,15 @@
         const ICONS = {
           menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
           close: '<path d="M6 6l12 12M18 6 6 18"/>',
+          "chevron-down": '<path d="m6 9 6 6 6-6"/>',
           download: '<path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/>',
           arrow: '<path d="M5 12h14m0 0-6-6m6 6-6 6"/>',
           check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+          user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>',
+          logout:
+            '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+          receipt:
+            '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6"/><path d="M9 12h6"/>',
           book: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>',
           file: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',
           gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8c-2 0-4-.5-4-2.2S9.6 4 12 8Zm0 0c2 0 4-.5 4-2.2S14.4 4 12 8Z"/>',
@@ -1436,6 +1805,17 @@
           document.title = title;
           if (desc) $("#meta-desc").setAttribute("content", desc);
         }
+        const fmtDate = (v) => {
+          if (!v) return "—";
+          const d = new Date(v);
+          return isNaN(d.getTime())
+            ? "—"
+            : d.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              });
+        };
 
         let settings = clone(DEFAULT_SETTINGS);
         let user = null;
@@ -1472,9 +1852,7 @@
         }
 
         /* ============================================================
-           CUSTOMER AUTH — talks to /api/customer/*
-           Token is stored in its own localStorage key so it never
-           collides with the admin token (ps_admin_token).
+           CUSTOMER AUTH
         ============================================================ */
         const CUSTOMER_TOKEN_KEY = "ps_customer_token";
         const userAuth = {
@@ -1547,6 +1925,25 @@
           },
         };
 
+        async function customerApi(path, opts = {}) {
+          const token = userAuth._getToken();
+          const res = await fetch("/api/customer" + path, {
+            ...opts,
+            headers: {
+              ...(opts.body ? { "content-type": "application/json" } : {}),
+              ...(token ? { authorization: "Bearer " + token } : {}),
+              ...(opts.headers || {}),
+            },
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const err = new Error(data.error || "Request failed");
+            err.status = res.status;
+            throw err;
+          }
+          return data;
+        }
+
         /* ============================================================
            GOOGLE IDENTITY SERVICES
         ============================================================ */
@@ -1558,7 +1955,6 @@
           if (gisPromise) return gisPromise;
           gisPromise = new Promise(function (resolve, reject) {
             if (document.querySelector('script[src="' + GIS_SRC + '"]')) {
-              /* already injected via <head>, just wait for it */
               let tries = 0;
               const t = setInterval(() => {
                 tries++;
@@ -1651,7 +2047,8 @@
             if (!data.token) throw new Error("Server did not return a token");
             user = userAuth._setUserFromGoogle(data);
             toast("Signed in with Google");
-            location.hash = "#/";
+            if (location.hash === "#/" || location.hash === "") renderRoute();
+            else location.hash = "#/";
           } catch (e) {
             toast(e.message || "Google sign-in failed");
           }
@@ -1659,6 +2056,7 @@
 
         const Logo = () =>
           `<a class="logo" href="#/" aria-label="${esc(settings.siteName)} home"><span class="logo-mark">${icon("book", 16)}</span>${esc(settings.siteName)}</a>`;
+        /* Our vision is now a standalone page (/vision.html) — removed from navbar. */
         const NAV = [
           { href: "#/", label: "Home", match: (p) => p === "/" },
           {
@@ -1666,23 +2064,44 @@
             label: "Study material",
             match: (p) => p.startsWith("/material"),
           },
-          {
-            href: "#/vision",
-            label: "Our vision",
-            match: (p) => p === "/vision",
-          },
         ];
+
+        function profileInitial(name) {
+          const src = String(name || "").trim();
+          return src ? src.charAt(0).toUpperCase() : "?";
+        }
+
         function Header(path = "/") {
           const links = NAV.map(
             (n) =>
               `<a href="${n.href}" class="${n.match(path) ? "is-current" : ""}">${n.label}</a>`,
           ).join("");
+
+          const displayName = user ? user.name || user.email || "Account" : "";
+
           const bar = user
-            ? `<span class="nav-user">${esc(user.name || user.email || "Account")}</span><button class="nav-link-btn" data-action="signOut">Sign out</button>`
+            ? `<div class="profile-menu">
+                 <button type="button" class="profile-trigger" data-action="toggleProfile" aria-expanded="false" aria-haspopup="true">
+                   <span class="profile-avatar">${esc(profileInitial(displayName))}</span>
+                   <span class="profile-name">${esc(displayName)}</span>
+                   <span class="profile-chevron">${icon("chevron-down", 14)}</span>
+                 </button>
+                 <div class="profile-dropdown" id="profile-dropdown" role="menu">
+                   <div class="profile-dropdown-head">
+                     <div class="profile-dropdown-name">${esc(user.name || "Account")}</div>
+                     <div class="profile-dropdown-email">${esc(user.email || "")}</div>
+                   </div>
+                   <a href="#/account" role="menuitem">${icon("user", 16)}<span>My account</span></a>
+                   <a href="#/account" role="menuitem">${icon("receipt", 16)}<span>Purchases &amp; invoices</span></a>
+                   <button type="button" class="signout" data-action="signOut" role="menuitem">${icon("logout", 16)}<span>Sign out</span></button>
+                 </div>
+               </div>`
             : `<a class="nav-link-btn" href="#/login">Log in</a><a class="btn btn-dark" href="#/signup">Sign up</a>`;
+
           const drawer = user
-            ? `<button class="btn btn-ghost" data-action="signOut">Sign out</button>`
+            ? `<a class="btn btn-ghost" href="#/account">My account</a><button class="btn btn-ghost" data-action="signOut">Sign out</button>`
             : `<a class="btn btn-ghost" href="#/login">Log in</a><a class="btn btn-dark" href="#/signup">Sign up</a>`;
+
           return `<div class="wrap"><div class="nav glass">${Logo()}
       <nav class="nav-links" aria-label="Main">${links}</nav>
       <div class="nav-auth">${bar}</div>
@@ -1717,10 +2136,17 @@
               ? `<a class="powered" href="${esc(p.url)}" target="_blank">${tag}</a>`
               : `<span class="powered">${tag}</span>`;
           const tracks = exams.filter((e) => e.status !== "soon").slice(0, 6);
+          const explore = [
+            `<li><a href="#/materials">Study material</a></li>`,
+            `<li><a href="/vision.html">Our vision</a></li>`,
+            user
+              ? `<li><a href="#/account">My account</a></li>`
+              : `<li><a href="#/login">Log in</a></li>`,
+          ].join("");
           return `<div class="wrap"><div class="foot-grid">
       <div>${Logo()}<p class="muted" style="margin-top:12px;max-width:34ch">${esc(s.tagline)}</p><div style="margin-top:18px">${powered}</div></div>
       <div><h4>Tracks</h4><ul>${tracks.map((e) => `<li><a href="${esc(examHref(e))}">${esc(e.name)}</a></li>`).join("")}</ul></div>
-      <div><h4>Explore</h4><ul><li><a href="#/materials">Study material</a></li><li><a href="#/vision">Our vision</a></li><li><a href="#/login">Log in</a></li></ul></div>
+      <div><h4>Explore</h4><ul>${explore}</ul></div>
       <div><h4>Contact</h4><ul>${contact || '<li class="muted">Add contact details in Admin</li>'}</ul></div></div>
       <div class="foot-note"><span>&copy; ${new Date().getFullYear()} ${esc(s.siteName)}${p.name ? `, a product of ${esc(p.name)}` : ""}.</span></div></div>`;
         }
@@ -1772,52 +2198,50 @@
       <div class="exam-grid">${shown.map((e) => ExamTile(e, counts)).join("")}</div>`;
         }
         function VisionSection() {
-          const v = {
-            headline: "One shelf for every exam and every career.",
-            text: "PrepShelf starts with clear, affordable study material for government exams. We are growing into career tracks such as data analysis and software, so anyone preparing for a better future can find the right material in one place.",
-            pillars: [
-              [
-                "book",
-                "Clear over crowded",
-                "Short, structured notes. Every pack says what is inside before you decide.",
-              ],
-              [
-                "gift",
-                "Free to start",
-                "Each track has free packs, so you can try the material before you pay.",
-              ],
-              [
-                "cap",
-                "From exams to careers",
-                "Government exams today. Data analyst, developer and more career tracks next.",
-              ],
-            ],
-            roadmap: [
-              [
-                "Now",
-                "Study material",
-                "Notes, e-books and previous year papers for government exams and data analysis.",
-                "live",
-              ],
-              [
-                "Next",
-                "More career tracks",
-                "Software developer, digital marketing, finance, cloud and data science.",
-                "next",
-              ],
-              [
-                "Later",
-                "Practice and progress",
-                "Mock tests, a saved library and learner accounts.",
-                "later",
-              ],
-            ],
-          };
-          const tone = { live: "badge--green", next: "badge--blue", later: "" };
-          return `<section class="section vision"><div class="wrap vision-grid">
-      <div><h2>${esc(v.headline)}</h2><p class="lead">${esc(v.text)}</p>
-        <div class="pillars">${v.pillars.map(([ic, t, d]) => `<div class="benefit"><span class="ico">${icon(ic, 20)}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join("")}</div></div>
-      <ol class="roadmap">${v.roadmap.map(([w, t, d, st]) => `<li class="road is-${st}"><span class="badge ${tone[st]}">${esc(w)}</span><h3>${esc(t)}</h3><p>${esc(d)}</p></li>`).join("")}</ol></div></section>`;
+          return `<section class="vision"><div class="wrap"><div class="vision-inner">
+        <div class="vision-label"><span>Our vision</span></div>
+        <h2 class="vision-title">One shelf for every exam <em>— and every career after it.</em></h2>
+        <p class="vision-lede">
+          PrepShelf starts with clear, affordable study material for a focused
+          set of government exams. We go deeper on what we have — roadmaps,
+          question banks and document courses next — and build career tracks
+          for the years after the exam.
+        </p>
+        <div class="vision-pillars">
+          <div class="vision-pillar">
+            <span class="vision-pillar-icon">${icon("book", 20)}</span>
+            <b>Clear over crowded</b>
+            <span class="vision-pillar-text">Short, structured notes. Every pack says what is inside before you decide.</span>
+          </div>
+          <div class="vision-pillar">
+            <span class="vision-pillar-icon">${icon("gift", 20)}</span>
+            <b>Free to start</b>
+            <span class="vision-pillar-text">Each track has free packs, so you can try the material before you pay.</span>
+          </div>
+          <div class="vision-pillar">
+            <span class="vision-pillar-icon">${icon("cap", 20)}</span>
+            <b>Depth, not sprawl</b>
+            <span class="vision-pillar-text">Fewer exams, deeper material. Roadmaps and question banks next.</span>
+          </div>
+        </div>
+        <ol class="vision-road">
+          <li class="vision-road-item is-now">
+            <span class="vision-road-tag">Now · Live</span>
+            <b>Study material</b>
+            <p>Notes, e-books and previous year papers. Free packs on every track.</p>
+          </li>
+          <li class="vision-road-item">
+            <span class="vision-road-tag">Live</span>
+            <b>Career tracks</b>
+            <p>Data Analyst is live. Software, Marketing, Finance, Data Science and Cloud are next.</p>
+          </li>
+          <li class="vision-road-item">
+            <span class="vision-road-tag">Next</span>
+            <b>Roadmaps &amp; question banks</b>
+            <p>Structured study paths and topic-wise practice for each exam.</p>
+          </li>
+        </ol>
+      </div></div></section>`;
         }
         const EmptyState = (title, text, href, cta) =>
           `<div class="empty"><h3>${esc(title)}</h3><p>${esc(text)}</p>${href ? `<a class="btn btn-ghost" href="${href}">${esc(cta)}</a>` : ""}</div>`;
@@ -1831,9 +2255,6 @@
         <button class="btn btn-primary" type="submit">Notify me</button></form></div>`;
         };
 
-        /* ============================================================
-           BUY / DOWNLOAD — routes both paid AND free items to /pay.html
-        ============================================================ */
         function materialAction(m) {
           const wa = settings.whatsapp
             ? `https://wa.me/${settings.whatsapp}?text=${encodeURIComponent("Hi, I want to get: " + m.title)}`
@@ -1912,7 +2333,7 @@
       <section class="hero"><div class="wrap hero-grid">
         <div><h1>Study material for your exam and your next career</h1>
           <p class="lead">Notes, e-books and previous year papers for government exams, with career tracks like Data Analyst on the way. All in one place.</p>
-          <div class="hero-cta"><a class="btn btn-primary btn-lg" href="#/materials">Browse study material</a><a class="btn btn-ghost btn-lg" href="#/vision">Our vision</a></div>
+          <div class="hero-cta"><a class="btn btn-primary btn-lg" href="#/materials">Browse study material</a><a class="btn btn-ghost btn-lg" href="/vision.html">Our vision</a></div>
           <div class="hero-popular"><span>Jump to your exam:</span>${live
             .slice(0, 5)
             .map(
@@ -1930,7 +2351,7 @@
               <span class="hb-bottom"><span class="hb-title">${esc(m.title)}</span><span class="hb-price">${m.price > 0 ? fmtINR(m.price) : "Free"}</span></span></a>`;
             })
             .join("")}
-          <a class="hero-chip" href="#/vision"><span class="ico">${icon("cap", 20)}</span><span><b>${live.length} tracks live</b><small>${soon ? soon + " more coming soon" : "More on the way"}</small></span></a>
+          <a class="hero-chip" href="/vision.html"><span class="ico">${icon("cap", 20)}</span><span><b>${live.length} tracks live</b><small>${soon ? soon + " more coming soon" : "More on the way"}</small></span></a>
         </div></div></section>
       <div class="wrap benefits">
         <div class="benefit"><span class="ico">${icon("file", 20)}</span><div><b>Opens on any phone</b><span>Light PDFs that need no special app.</span></div></div>
@@ -2068,15 +2489,86 @@
           <p class="muted" style="margin-top:14px;font-size:.88rem">PDF format. Opens on phone, tablet and computer.</p></div>${adSlot("detail-side")}</aside></div>
       ${related.length ? `<div style="margin-top:56px">${SectionHead("More for " + (exam ? exam.name : "this track"))}<div class="m-grid">${related.map((x) => MaterialCard(x, byId(exams))).join("")}</div></div>` : ""}</section>`;
         }
-        async function viewVision() {
-          setMeta(`Our vision | ${settings.siteName}`);
-          return `<section class="page-head"><div class="wrap"><h1>Where PrepShelf is going</h1><p class="lead">What we are building today and what comes next.</p></div></section>
-      ${VisionSection()}<section class="section--tight"><div class="wrap">${LeadBox()}</div></section>`;
+
+        /* ---------- Account (purchases + invoices) ---------- */
+        async function viewAccount() {
+          if (!user) {
+            location.hash = "#/login";
+            return "";
+          }
+          setMeta(`My account | ${settings.siteName}`);
+
+          let orders = [];
+          let error = "";
+          try {
+            orders = await customerApi("/orders");
+          } catch (e) {
+            error = e.message || "Could not load your purchases.";
+          }
+
+          const token = userAuth._getToken();
+
+          const rows = orders.length
+            ? orders
+                .map((o) => {
+                  const amount = Number(o.finalAmount) || 0;
+                  const status =
+                    o.status === "paid"
+                      ? "Paid"
+                      : o.status === "free"
+                        ? "Free"
+                        : o.status || "—";
+                  const id = encodeURIComponent(o.id);
+                  const tk = encodeURIComponent(token);
+                  const actions = [
+                    o.status === "paid" || o.status === "free"
+                      ? `<a class="btn btn-ghost btn-sm" href="/api/customer/orders/${id}/invoice?token=${tk}" target="_blank" rel="noopener">Invoice</a>`
+                      : "",
+                    o.hasDownload
+                      ? `<a class="btn btn-primary btn-sm" href="/api/customer/orders/${id}/download?token=${tk}">Download</a>`
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ");
+                  return `<tr>
+          <td style="padding:12px;border-bottom:1px solid var(--line)">
+            <b>${esc(o.materialTitle || o.materialId || "—")}</b>
+            <div class="muted" style="font-size:.8rem">${esc(o.orderId || o.id)}</div>
+          </td>
+          <td style="padding:12px;border-bottom:1px solid var(--line)">${esc(fmtDate(o.paidAt || o.createdAt))}</td>
+          <td style="padding:12px;border-bottom:1px solid var(--line)">${amount > 0 ? fmtINR(amount) : "Free"}</td>
+          <td style="padding:12px;border-bottom:1px solid var(--line)">${esc(status)}</td>
+          <td style="padding:12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap">${actions || "—"}</td>
+        </tr>`;
+                })
+                .join("")
+            : `<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--muted)">
+         No purchases yet. <a href="#/materials" style="color:var(--blue);font-weight:600">Browse study material</a>.
+       </td></tr>`;
+
+          return `<section class="page-head"><div class="wrap">
+      <h1>My account</h1>
+      <p class="lead">${esc(user.name || "")}${user.email ? " · " + esc(user.email) : ""}</p>
+    </div></section>
+    <section class="wrap page-body">
+      ${error ? `<div class="callout" style="margin-bottom:18px">${esc(error)}</div>` : ""}
+      <div style="background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;overflow:auto">
+        <h2 style="margin-bottom:12px">Purchases &amp; downloads</h2>
+        <table style="width:100%;border-collapse:collapse;min-width:620px">
+          <thead><tr>
+            <th style="text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:.8rem;text-transform:uppercase;color:var(--muted)">Product</th>
+            <th style="text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:.8rem;text-transform:uppercase;color:var(--muted)">Date</th>
+            <th style="text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:.8rem;text-transform:uppercase;color:var(--muted)">Amount</th>
+            <th style="text-align:left;padding:10px;border-bottom:1px solid var(--line);font-size:.8rem;text-transform:uppercase;color:var(--muted)">Status</th>
+            <th style="text-align:right;padding:10px;border-bottom:1px solid var(--line)"></th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <p style="margin-top:18px"><button class="btn btn-ghost" data-action="signOut">Sign out</button></p>
+    </section>`;
         }
 
-        /* ============================================================
-           AUTH VIEW — real login/signup with email + Google
-        ============================================================ */
         function viewAuth(mode) {
           const up = mode === "signup";
           setMeta((up ? "Sign up" : "Log in") + ` | ${settings.siteName}`);
@@ -2099,28 +2591,60 @@
           return `<section class="wrap page-body" style="padding-top:64px">${EmptyState("This page does not exist", "The link may be old or the item may have been removed.", "#/", "Go to home page")}</section>`;
         }
 
+        /* ============================================================
+           ADS RENDERER (AdSense + image banners)
+        ============================================================ */
+        function normalizeAdSlot(v) {
+          if (typeof v === "string") {
+            return Object.assign({}, AD_SLOT_DEFAULTS, { slotId: v });
+          }
+          return Object.assign({}, AD_SLOT_DEFAULTS, v || {});
+        }
+        function ensureAdsense(clientId) {
+          if (document.querySelector("script[data-adsense]")) return;
+          const s = document.createElement("script");
+          s.async = true;
+          s.dataset.adsense = "1";
+          s.src =
+            "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" +
+            encodeURIComponent(clientId);
+          document.head.appendChild(s);
+        }
         function hydrateAds() {
-          const a = settings.ads;
+          const a = settings.ads || {};
           $$(".ad[data-ad]").forEach((el) => {
-            const slotId = a.slots && a.slots[el.dataset.ad];
-            if (a.enabled && a.clientId && slotId) {
-              if (!$("script[data-adsense]")) {
-                const s = document.createElement("script");
-                s.async = true;
-                s.dataset.adsense = "1";
-                s.src =
-                  "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" +
-                  encodeURIComponent(a.clientId);
-                document.head.appendChild(s);
-              }
-              el.innerHTML = `<ins class="adsbygoogle" style="display:block" data-ad-client="${esc(a.clientId)}" data-ad-slot="${esc(slotId)}" data-ad-format="auto"></ins>`;
+            const slot = normalizeAdSlot(a.slots && a.slots[el.dataset.ad]);
+            el.classList.remove("ad--placeholder");
+            el.innerHTML = "";
+
+            if (slot.image) {
+              const size =
+                slot.width && slot.height
+                  ? ` width="${esc(slot.width)}" height="${esc(slot.height)}"`
+                  : "";
+              const img = `<img src="${esc(slot.image)}" alt="${esc(slot.alt || "")}"${size} loading="lazy" decoding="async" style="max-width:100%;height:auto;display:block;margin:0 auto">`;
+              const link = safeUrl(slot.link);
+              el.innerHTML = link
+                ? `<a href="${esc(link)}" target="_blank" rel="noopener sponsored">${img}</a>`
+                : img;
+              return;
+            }
+
+            if (a.enabled && a.clientId && slot.slotId) {
+              ensureAdsense(a.clientId);
+              el.innerHTML = `<ins class="adsbygoogle" style="display:block" data-ad-client="${esc(a.clientId)}" data-ad-slot="${esc(slot.slotId)}" data-ad-format="auto" data-full-width-responsive="true"></ins>`;
               try {
                 (window.adsbygoogle = window.adsbygoogle || []).push({});
               } catch (e) {}
-            } else if (a.placeholders) {
+              return;
+            }
+
+            if (a.placeholders) {
               el.classList.add("ad--placeholder");
               el.textContent = "Ad space: " + el.dataset.ad;
-            } else el.remove();
+              return;
+            }
+            el.remove();
           });
         }
 
@@ -2128,7 +2652,7 @@
           [/^\/$/, () => viewHome()],
           [/^\/materials$/, (m, q) => viewMaterials(q)],
           [/^\/material\/([\w-]+)$/, (m) => viewMaterial(m[1])],
-          [/^\/vision$/, () => viewVision()],
+          [/^\/account$/, () => viewAccount()],
           [/^\/(login|signup)$/, (m) => viewAuth(m[1])],
         ];
         function parseHash() {
@@ -2154,7 +2678,6 @@
           $("#footer").innerHTML = Footer(exams);
           $("#main").innerHTML = html;
           hydrateAds();
-          /* Mount Google button if the auth page rendered */
           if (document.getElementById("g-slot")) mountGoogle();
           window.scrollTo(0, 0);
         }
@@ -2179,6 +2702,12 @@
             el.setAttribute("aria-expanded", open);
             $("svg", el).outerHTML = icon(open ? "close" : "menu", 22);
           },
+          toggleProfile(el) {
+            const dd = document.getElementById("profile-dropdown");
+            if (!dd) return;
+            const open = dd.classList.toggle("is-open");
+            el.setAttribute("aria-expanded", open ? "true" : "false");
+          },
           noLink() {
             toast("No link added yet. Add one in Admin.");
           },
@@ -2194,7 +2723,8 @@
             await userAuth.signOut();
             user = null;
             toast("Signed out");
-            renderRoute();
+            if (location.hash === "#/" || location.hash === "") renderRoute();
+            else location.hash = "#/";
           },
           "google-help"() {
             toast(
@@ -2204,8 +2734,17 @@
         };
         document.addEventListener("click", (e) => {
           const el = e.target.closest("[data-action]");
-          if (el && actions[el.dataset.action])
+          if (el && actions[el.dataset.action]) {
             actions[el.dataset.action](el, e);
+          }
+          /* Close profile dropdown when clicking outside it */
+          const menu = document.querySelector(".profile-menu");
+          const dd = document.getElementById("profile-dropdown");
+          if (dd && menu && !menu.contains(e.target)) {
+            dd.classList.remove("is-open");
+            const trigger = menu.querySelector(".profile-trigger");
+            if (trigger) trigger.setAttribute("aria-expanded", "false");
+          }
         });
         ["input", "change"].forEach((evt) =>
           document.addEventListener(evt, (e) => {
@@ -2264,7 +2803,8 @@
                   : await userAuth.signIn(email, password);
               user = u;
               toast(mode === "signup" ? "Account created" : "Welcome back");
-              location.hash = "#/";
+              if (location.hash === "#/" || location.hash === "") renderRoute();
+              else location.hash = "#/";
             } catch (e) {
               toast(e.message || "Could not sign you in");
               if (btn) {

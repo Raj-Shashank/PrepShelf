@@ -55,7 +55,7 @@ const couponsCol = db.collection("coupons");
 const ordersCol = db.collection("orders");
 const tokensCol = db.collection("tokens");
 const settingsCol = db.collection("settings");
-const customersCol = db.collection("customers"); // <-- NEW: customer accounts
+const customersCol = db.collection("customers");
 
 /* ============================================================
    RAZORPAY
@@ -82,7 +82,6 @@ try {
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-/* Rate limiter */
 const rateBuckets = new Map();
 function rateLimit(windowMs, max, keyFn) {
   return (req, res, next) => {
@@ -122,6 +121,15 @@ function slugify(s) {
       .replace(/^-|-$/g, "") || uid()
   );
 }
+const escHtml = (s) =>
+  String(s == null ? "" : s).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+const fmtINR = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
 
 async function getSettings() {
   const doc = await settingsCol.doc("site").get();
@@ -135,29 +143,26 @@ async function saveSettings(patch) {
 }
 
 /* ============================================================
-   PASSWORD HASHING (scrypt — built into Node, no extra deps)
+   PASSWORD HASHING
 ============================================================ */
 function hashPassword(plain) {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(String(plain), salt, 32).toString("hex");
   return "scrypt$" + salt + "$" + hash;
 }
-
 function verifyPassword(plain, stored) {
   if (!stored || typeof stored !== "string") return false;
   if (stored.indexOf("scrypt$") === 0) {
     const parts = stored.split("$");
     if (parts.length !== 3) return false;
-    const salt = parts[1];
-    const expected = parts[2];
     let actual;
     try {
-      actual = crypto.scryptSync(String(plain), salt, 32).toString("hex");
+      actual = crypto.scryptSync(String(plain), parts[1], 32).toString("hex");
     } catch (e) {
       return false;
     }
     const a = Buffer.from(actual, "hex");
-    const b = Buffer.from(expected, "hex");
+    const b = Buffer.from(parts[2], "hex");
     if (a.length !== b.length) return false;
     try {
       return crypto.timingSafeEqual(a, b);
@@ -167,7 +172,6 @@ function verifyPassword(plain, stored) {
   }
   return String(plain) === stored;
 }
-
 function looksHashed(v) {
   return typeof v === "string" && v.indexOf("scrypt$") === 0;
 }
@@ -502,6 +506,15 @@ async function ensureSeed() {
     createdAt: stamp(0),
   });
 
+  const emptyAdSlot = () => ({
+    kind: "adsense",
+    slotId: "",
+    image: "",
+    link: "",
+    width: "",
+    height: "",
+    alt: "",
+  });
   const settings = {
     siteName: "PrepShelf",
     tagline: "Study material for government exams and career prep.",
@@ -527,10 +540,10 @@ async function ensureSeed() {
       clientId: "",
       placeholders: false,
       slots: {
-        "home-mid": "",
-        "list-top": "",
-        "detail-side": "",
-        "detail-bottom": "",
+        "home-mid": emptyAdSlot(),
+        "list-top": emptyAdSlot(),
+        "detail-side": emptyAdSlot(),
+        "detail-bottom": emptyAdSlot(),
       },
     },
     razorpay: { enabled: false, keyId: "" },
@@ -575,17 +588,15 @@ async function ensureSeed() {
 }
 
 /* ============================================================
-   AUTH — admin token store with expiry
+   ADMIN AUTH
 ============================================================ */
 const TOKENS = new Map();
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7;
-
 function issueToken() {
   const token = crypto.randomBytes(32).toString("hex");
   TOKENS.set(token, Date.now() + TOKEN_TTL_MS);
   return token;
 }
-
 function auth(req, res, next) {
   const h = req.headers.authorization || "";
   const t = h.replace(/^Bearer\s+/i, "");
@@ -596,19 +607,113 @@ function auth(req, res, next) {
   }
   res.status(401).json({ error: "unauthorized" });
 }
-
 setInterval(
   () => {
     const now = Date.now();
-    for (const [t, exp] of TOKENS) {
-      if (exp <= now) TOKENS.delete(t);
-    }
+    for (const [t, exp] of TOKENS) if (exp <= now) TOKENS.delete(t);
   },
   1000 * 60 * 60,
 );
 
 /* ============================================================
-   LOGIN — admin password
+   CUSTOMER AUTH
+============================================================ */
+const CUSTOMER_TOKENS = new Map();
+const CUSTOMER_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+
+function issueCustomerToken(userId) {
+  const token = crypto.randomBytes(32).toString("hex");
+  CUSTOMER_TOKENS.set(token, {
+    userId,
+    expiresAt: Date.now() + CUSTOMER_TTL_MS,
+  });
+  return token;
+}
+function customerAuth(req, res, next) {
+  const h = req.headers.authorization || "";
+  const t = h.replace(/^Bearer\s+/i, "");
+  if (t && CUSTOMER_TOKENS.has(t)) {
+    const rec = CUSTOMER_TOKENS.get(t);
+    if (rec.expiresAt > Date.now()) {
+      req.customer = rec;
+      req.customerToken = t;
+      return next();
+    }
+    CUSTOMER_TOKENS.delete(t);
+  }
+  res.status(401).json({ error: "unauthorized" });
+}
+
+/**
+ * Accepts the customer token from EITHER:
+ *  - Authorization: Bearer <token>   (fetch / XHR)
+ *  - ?token=<token>                  (plain <a href> / new-tab links)
+ *
+ * Required for the invoice + download endpoints because browsers cannot
+ * attach custom headers when navigating to a URL.
+ */
+function customerAuthFlexible(req, res, next) {
+  const h = req.headers.authorization || "";
+  let t = h.replace(/^Bearer\s+/i, "");
+  if (!t && req.query && req.query.token) t = String(req.query.token);
+  if (t && CUSTOMER_TOKENS.has(t)) {
+    const rec = CUSTOMER_TOKENS.get(t);
+    if (rec.expiresAt > Date.now()) {
+      req.customer = rec;
+      req.customerToken = t;
+      return next();
+    }
+    CUSTOMER_TOKENS.delete(t);
+  }
+  res.status(401).json({ error: "unauthorized" });
+}
+
+function optionalCustomer(req, _res, next) {
+  const h = req.headers.authorization || "";
+  const t = h.replace(/^Bearer\s+/i, "");
+  if (t && CUSTOMER_TOKENS.has(t)) {
+    const rec = CUSTOMER_TOKENS.get(t);
+    if (rec.expiresAt > Date.now()) {
+      req.customer = rec;
+      req.customerToken = t;
+    }
+  }
+  next();
+}
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [t, rec] of CUSTOMER_TOKENS)
+      if (rec.expiresAt <= now) CUSTOMER_TOKENS.delete(t);
+  },
+  1000 * 60 * 60,
+);
+
+function publicCustomer(c) {
+  if (!c) return null;
+  return {
+    id: c.id,
+    name: c.name || "",
+    email: c.email || "",
+    createdAt: c.createdAt || "",
+  };
+}
+async function findCustomerByEmail(email) {
+  const snap = await customersCol.where("email", "==", email).limit(1).get();
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return { id: doc.id, ...doc.data() };
+}
+async function findCustomerByGoogleId(gid) {
+  if (!gid) return null;
+  const snap = await customersCol.where("googleId", "==", gid).limit(1).get();
+  if (snap.empty) return null;
+  const doc = snap.docs[0];
+  return { id: doc.id, ...doc.data() };
+}
+
+/* ============================================================
+   ADMIN LOGIN
 ============================================================ */
 app.post(
   "/api/login",
@@ -630,11 +735,6 @@ app.post(
   },
 );
 
-/* ============================================================
-   ADMIN GOOGLE SIGN-IN
-   (unchanged) — verifies via Google tokeninfo, checks allowlist,
-   issues an admin token.
-============================================================ */
 app.post(
   "/api/auth/google",
   rateLimit(60000, 20, (r) => r.ip),
@@ -643,10 +743,8 @@ app.post(
       const { credential } = req.body || {};
       if (!credential)
         return res.status(400).json({ error: "Missing Google credential" });
-
       const fetchFn =
         typeof fetch === "function" ? fetch : require("node-fetch");
-
       const url =
         "https://oauth2.googleapis.com/tokeninfo?id_token=" +
         encodeURIComponent(credential);
@@ -654,16 +752,12 @@ app.post(
       if (!gr.ok)
         return res.status(401).json({ error: "Invalid Google token" });
       const payload = await gr.json();
-
       const settings = (await getSettings()) || {};
       const g = settings.google || {};
-
-      if (g.clientId && payload.aud && payload.aud !== g.clientId) {
+      if (g.clientId && payload.aud && payload.aud !== g.clientId)
         return res
           .status(401)
           .json({ error: "Token was not issued for this application" });
-      }
-
       const email = String(payload.email || "")
         .trim()
         .toLowerCase();
@@ -673,7 +767,6 @@ app.post(
         payload.email_verified === true || payload.email_verified === "true";
       if (!verified)
         return res.status(401).json({ error: "Google email is not verified" });
-
       const allowedSetting = String(g.allowedEmails || "")
         .split(/\r?\n/)
         .map((s) => s.trim().toLowerCase())
@@ -688,18 +781,14 @@ app.post(
       const allowedUsers = adminUsers
         .map((u) => String(u.email || "").toLowerCase())
         .filter(Boolean);
-
       const allAllowed = []
         .concat(allowedSetting)
         .concat(allowedEnv)
         .concat(allowedUsers);
-
-      if (allAllowed.length && allAllowed.indexOf(email) === -1) {
+      if (allAllowed.length && allAllowed.indexOf(email) === -1)
         return res
           .status(403)
           .json({ error: "This Google account is not authorised" });
-      }
-
       const token = issueToken();
       res.json({ token, email, name: payload.name || "" });
     } catch (e) {
@@ -709,9 +798,6 @@ app.post(
   },
 );
 
-/* ============================================================
-   ADMIN SIGNUP — create an additional admin account
-============================================================ */
 app.post(
   "/api/auth/signup",
   rateLimit(60000, 5, (r) => r.ip),
@@ -723,7 +809,6 @@ app.post(
         .trim()
         .toLowerCase();
       const password = String(body.password || "");
-
       if (name.length < 2)
         return res.status(400).json({ error: "Name is too short" });
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
@@ -732,18 +817,14 @@ app.post(
         return res
           .status(400)
           .json({ error: "Password must be at least 6 characters" });
-
       const settings = (await getSettings()) || {};
       const users = Array.isArray(settings.adminUsers)
         ? settings.adminUsers.slice()
         : [];
-
-      if (users.some((u) => String(u.email).toLowerCase() === email)) {
+      if (users.some((u) => String(u.email).toLowerCase() === email))
         return res
           .status(409)
           .json({ error: "An admin with this email already exists" });
-      }
-
       const entry = {
         id: uid(),
         name,
@@ -753,7 +834,6 @@ app.post(
       };
       users.push(entry);
       await saveSettings({ adminUsers: users });
-
       const token = issueToken();
       res.json({ token, email, name });
     } catch (e) {
@@ -763,9 +843,6 @@ app.post(
   },
 );
 
-/* ============================================================
-   ADMIN PASSWORD CHANGE
-============================================================ */
 app.post("/api/admin/password", auth, async (req, res) => {
   try {
     const { current, next } = req.body || {};
@@ -775,13 +852,10 @@ app.post("/api/admin/password", auth, async (req, res) => {
       return res
         .status(400)
         .json({ error: "New password must be at least 6 characters" });
-
     const settings = (await getSettings()) || {};
     const stored = settings.adminPassword || ADMIN_PASSWORD;
-
     if (!verifyPassword(current, stored))
       return res.status(401).json({ error: "Current password is wrong" });
-
     await saveSettings({ adminPassword: hashPassword(next) });
     res.json({ ok: true });
   } catch (e) {
@@ -791,73 +865,8 @@ app.post("/api/admin/password", auth, async (req, res) => {
 });
 
 /* ============================================================
-   CUSTOMER AUTH — separate namespace from admin.
-   Stored in "customers" collection. Tokens live in CUSTOMER_TOKENS
-   so they never collide with admin tokens.
+   CUSTOMER AUTH ENDPOINTS
 ============================================================ */
-const CUSTOMER_TOKENS = new Map();
-const CUSTOMER_TTL_MS = 1000 * 60 * 60 * 24 * 30; /* 30 days */
-
-function issueCustomerToken(userId) {
-  const token = crypto.randomBytes(32).toString("hex");
-  CUSTOMER_TOKENS.set(token, {
-    userId,
-    expiresAt: Date.now() + CUSTOMER_TTL_MS,
-  });
-  return token;
-}
-
-function customerAuth(req, res, next) {
-  const h = req.headers.authorization || "";
-  const t = h.replace(/^Bearer\s+/i, "");
-  if (t && CUSTOMER_TOKENS.has(t)) {
-    const rec = CUSTOMER_TOKENS.get(t);
-    if (rec.expiresAt > Date.now()) {
-      req.customer = rec;
-      req.customerToken = t;
-      return next();
-    }
-    CUSTOMER_TOKENS.delete(t);
-  }
-  res.status(401).json({ error: "unauthorized" });
-}
-
-setInterval(
-  () => {
-    const now = Date.now();
-    for (const [t, rec] of CUSTOMER_TOKENS) {
-      if (rec.expiresAt <= now) CUSTOMER_TOKENS.delete(t);
-    }
-  },
-  1000 * 60 * 60,
-);
-
-function publicCustomer(c) {
-  if (!c) return null;
-  return {
-    id: c.id,
-    name: c.name || "",
-    email: c.email || "",
-    createdAt: c.createdAt || "",
-  };
-}
-
-async function findCustomerByEmail(email) {
-  const snap = await customersCol.where("email", "==", email).limit(1).get();
-  if (snap.empty) return null;
-  const doc = snap.docs[0];
-  return { id: doc.id, ...doc.data() };
-}
-
-async function findCustomerByGoogleId(gid) {
-  if (!gid) return null;
-  const snap = await customersCol.where("googleId", "==", gid).limit(1).get();
-  if (snap.empty) return null;
-  const doc = snap.docs[0];
-  return { id: doc.id, ...doc.data() };
-}
-
-/* ---- Customer SIGNUP (email + password) ---- */
 app.post(
   "/api/customer/signup",
   rateLimit(60000, 10, (r) => r.ip),
@@ -869,7 +878,6 @@ app.post(
         .trim()
         .toLowerCase();
       const password = String(body.password || "");
-
       if (name.length < 2)
         return res.status(400).json({ error: "Name is too short" });
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
@@ -878,13 +886,11 @@ app.post(
         return res
           .status(400)
           .json({ error: "Password must be at least 6 characters" });
-
       const existing = await findCustomerByEmail(email);
       if (existing)
         return res
           .status(409)
           .json({ error: "An account with this email already exists" });
-
       const id = uid();
       const record = {
         id,
@@ -897,7 +903,6 @@ app.post(
         lastLoginAt: new Date().toISOString(),
       };
       await customersCol.doc(id).set(record);
-
       const token = issueCustomerToken(id);
       res.json({ token, user: publicCustomer(record) });
     } catch (e) {
@@ -907,7 +912,6 @@ app.post(
   },
 );
 
-/* ---- Customer LOGIN (email + password) ---- */
 app.post(
   "/api/customer/login",
   rateLimit(60000, 15, (r) => r.ip),
@@ -920,17 +924,14 @@ app.post(
       const password = String(body.password || "");
       if (!email || !password)
         return res.status(400).json({ error: "Email and password required" });
-
       const user = await findCustomerByEmail(email);
       if (!user || !user.password)
         return res.status(401).json({ error: "Invalid email or password" });
       if (!verifyPassword(password, user.password))
         return res.status(401).json({ error: "Invalid email or password" });
-
       await customersCol
         .doc(user.id)
         .set({ lastLoginAt: new Date().toISOString() }, { merge: true });
-
       const token = issueCustomerToken(user.id);
       res.json({ token, user: publicCustomer(user) });
     } catch (e) {
@@ -940,7 +941,6 @@ app.post(
   },
 );
 
-/* ---- Customer GOOGLE SIGN-IN ---- */
 app.post(
   "/api/customer/google",
   rateLimit(60000, 20, (r) => r.ip),
@@ -949,7 +949,6 @@ app.post(
       const { credential } = req.body || {};
       if (!credential)
         return res.status(400).json({ error: "Missing Google credential" });
-
       const fetchFn =
         typeof fetch === "function" ? fetch : require("node-fetch");
       const url =
@@ -959,15 +958,12 @@ app.post(
       if (!gr.ok)
         return res.status(401).json({ error: "Invalid Google token" });
       const payload = await gr.json();
-
       const settings = (await getSettings()) || {};
       const g = settings.google || {};
-      if (g.clientId && payload.aud && payload.aud !== g.clientId) {
+      if (g.clientId && payload.aud && payload.aud !== g.clientId)
         return res
           .status(401)
           .json({ error: "Token was not issued for this application" });
-      }
-
       const email = String(payload.email || "")
         .trim()
         .toLowerCase();
@@ -977,11 +973,9 @@ app.post(
         payload.email_verified === true || payload.email_verified === "true";
       if (!verified)
         return res.status(401).json({ error: "Google email is not verified" });
-
       const googleId = String(payload.sub || "");
       let user = await findCustomerByGoogleId(googleId);
       if (!user) user = await findCustomerByEmail(email);
-
       if (!user) {
         const id = uid();
         const record = {
@@ -997,16 +991,17 @@ app.post(
         await customersCol.doc(id).set(record);
         user = record;
       } else {
-        await customersCol.doc(user.id).set(
-          {
-            googleId: googleId || user.googleId || "",
-            lastLoginAt: new Date().toISOString(),
-          },
-          { merge: true },
-        );
+        await customersCol
+          .doc(user.id)
+          .set(
+            {
+              googleId: googleId || user.googleId || "",
+              lastLoginAt: new Date().toISOString(),
+            },
+            { merge: true },
+          );
         user = { ...user, googleId: googleId || user.googleId };
       }
-
       const token = issueCustomerToken(user.id);
       res.json({ token, user: publicCustomer(user) });
     } catch (e) {
@@ -1016,7 +1011,6 @@ app.post(
   },
 );
 
-/* ---- Customer SESSION CHECK ---- */
 app.get("/api/customer/me", customerAuth, async (req, res) => {
   try {
     const doc = await customersCol.doc(req.customer.userId).get();
@@ -1029,11 +1023,182 @@ app.get("/api/customer/me", customerAuth, async (req, res) => {
   }
 });
 
-/* ---- Customer LOGOUT ---- */
 app.post("/api/customer/logout", customerAuth, async (req, res) => {
   if (req.customerToken) CUSTOMER_TOKENS.delete(req.customerToken);
   res.json({ ok: true });
 });
+
+/* ---- Customer PURCHASES ---- */
+async function loadCustomerOrders(userId) {
+  const doc = await customersCol.doc(userId).get();
+  const email = doc.exists ? String(doc.data().email || "").toLowerCase() : "";
+  const [byId, byEmail] = await Promise.all([
+    ordersCol.where("customerId", "==", userId).get(),
+    email
+      ? ordersCol.where("customer.email", "==", email).get()
+      : Promise.resolve({ docs: [] }),
+  ]);
+  const map = new Map();
+  [...byId.docs, ...byEmail.docs].forEach((d) =>
+    map.set(d.id, { id: d.id, ...d.data() }),
+  );
+  return [...map.values()].sort((a, b) =>
+    String(b.createdAt || "").localeCompare(String(a.createdAt || "")),
+  );
+}
+
+app.get("/api/customer/orders", customerAuth, async (req, res) => {
+  try {
+    const rows = await loadCustomerOrders(req.customer.userId);
+    res.json(
+      rows.map((o) => ({
+        id: o.id,
+        orderId: o.orderId || o.id,
+        materialId: o.materialId,
+        materialTitle: o.materialTitle,
+        status: o.status,
+        finalAmount: o.finalAmount || 0,
+        createdAt: o.createdAt,
+        paidAt: o.paidAt || null,
+        hasDownload: o.status === "paid" || o.status === "free",
+      })),
+    );
+  } catch (e) {
+    console.error("customer orders error:", e);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+async function assertOrderOwnership(req, order) {
+  const doc = await customersCol.doc(req.customer.userId).get();
+  const email = doc.exists ? String(doc.data().email || "").toLowerCase() : "";
+  const orderEmail = String(
+    (order.customer && order.customer.email) || "",
+  ).toLowerCase();
+  if (order.customerId === req.customer.userId) return true;
+  if (email && orderEmail && email === orderEmail) return true;
+  return false;
+}
+
+app.get(
+  "/api/customer/orders/:id/invoice",
+  customerAuthFlexible,
+  async (req, res) => {
+    try {
+      const snap = await ordersCol.doc(req.params.id).get();
+      if (!snap.exists)
+        return res.status(404).json({ error: "Order not found" });
+      const order = { id: snap.id, ...snap.data() };
+      if (!(await assertOrderOwnership(req, order)))
+        return res.status(403).json({ error: "Not allowed" });
+      const settings = (await getSettings()) || {};
+      res.set("Content-Type", "text/html; charset=utf-8");
+      res.send(buildInvoiceHtml(order, settings));
+    } catch (e) {
+      console.error("customer invoice error:", e);
+      res.status(500).json({ error: "DB error" });
+    }
+  },
+);
+
+app.get(
+  "/api/customer/orders/:id/download",
+  customerAuthFlexible,
+  async (req, res) => {
+    try {
+      const snap = await ordersCol.doc(req.params.id).get();
+      if (!snap.exists)
+        return res.status(404).json({ error: "Order not found" });
+      const order = { id: snap.id, ...snap.data() };
+      if (!(await assertOrderOwnership(req, order)))
+        return res.status(403).json({ error: "Not allowed" });
+      if (order.status !== "paid" && order.status !== "free")
+        return res.status(402).json({ error: "Payment not complete" });
+      const token = crypto.randomBytes(24).toString("hex");
+      const expiresAt = Date.now() + 60 * 60 * 1000;
+      await tokensCol.doc(token).set({
+        token,
+        orderId: req.params.id,
+        materialId: order.materialId,
+        free: order.status === "free",
+        createdAt: Date.now(),
+        expiresAt,
+        downloads: 0,
+      });
+      res.redirect("/api/download/" + token);
+    } catch (e) {
+      console.error("customer download error:", e);
+      res.status(500).send("Download failed");
+    }
+  },
+);
+
+/* ---- INVOICE BUILDER ---- */
+function buildInvoiceHtml(order, settings) {
+  const c = order.customer || {};
+  const total = Number(order.finalAmount) || 0;
+  const isFree = order.status === "free" || total <= 0;
+  const orig = Number(order.originalPrice) || 0;
+  const disc = Number(order.discount) || 0;
+  const siteName = (settings && settings.siteName) || "PrepShelf";
+  const dateVal = order.paidAt || order.createdAt || "";
+  const dateStr = dateVal
+    ? new Date(dateVal).toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
+  const statusLabel = isFree
+    ? "Free download"
+    : order.status === "paid"
+      ? "Paid"
+      : order.status === "failed"
+        ? "Failed"
+        : "Pending";
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Invoice ${escHtml(order.orderId || order.id)}</title>
+<style>body{font:14px/1.55 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:32px;color:#16233b;background:#fff;margin:0}
+.inv{max-width:720px;margin:0 auto;border:1px solid #e4e8ee;border-radius:12px;padding:26px}
+.head{display:flex;justify-content:space-between;border-bottom:1px solid #e4e8ee;padding-bottom:16px;margin-bottom:18px;flex-wrap:wrap;gap:18px}
+.head h2{margin:0 0 4px;font-size:18px}
+.meta{text-align:right;font-size:12px;color:#5a667a;line-height:1.7}
+.meta b{color:#16233b}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px}
+.grid h4{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#5a667a;margin:0 0 6px}
+table{width:100%;border-collapse:collapse;margin-bottom:14px}
+th,td{padding:10px;border-bottom:1px solid #e4e8ee;text-align:left;font-size:13px}
+th{background:#f6f7f9;font-size:10px;text-transform:uppercase;color:#5a667a}
+th:last-child,td:last-child{text-align:right}
+.sum{margin-left:auto;width:280px}
+.sum div{display:flex;justify-content:space-between;padding:7px 0}
+.sum .total{border-top:2px solid #16233b;padding-top:10px;margin-top:6px;font-weight:700;font-size:15px}
+.foot{margin-top:22px;border-top:1px solid #e4e8ee;padding-top:14px;font-size:11px;color:#5a667a;text-align:center}
+@media print{body{padding:0}.inv{border:0}}
+</style></head><body><div class="inv">
+<div class="head">
+  <div><h2>${escHtml(siteName)}</h2>${settings && settings.email ? `<div style="font-size:12px;color:#5a667a">${escHtml(settings.email)}</div>` : ""}
+    ${settings && settings.whatsapp ? `<div style="font-size:12px;color:#5a667a">WhatsApp: ${escHtml(settings.whatsapp)}</div>` : ""}</div>
+  <div class="meta">Invoice: <b>${escHtml(order.orderId || order.id)}</b><br>Date: <b>${escHtml(dateStr)}</b><br>Status: <b>${escHtml(statusLabel)}</b></div>
+</div>
+<div class="grid">
+  <div><h4>Billed to</h4><b>${escHtml(c.name || "—")}</b><div>${escHtml(c.email || "")}</div><div>${escHtml(c.phone || "")}</div></div>
+  <div><h4>Payment</h4>Method: <b>${isFree ? "No payment required" : "Razorpay"}</b>
+    ${order.paymentId ? `<div>Payment ID: <b>${escHtml(order.paymentId)}</b></div>` : ""}
+    ${order.couponCode ? `<div>Coupon: <b>${escHtml(order.couponCode)}</b></div>` : ""}</div>
+</div>
+<table><thead><tr><th>Description</th><th>Qty</th><th>Amount</th></tr></thead>
+<tbody><tr><td>${escHtml(order.materialTitle || order.materialId || "Study material")}</td><td>1</td><td>${isFree ? "Free" : fmtINR(orig || total)}</td></tr></tbody></table>
+<div class="sum">
+  <div><span>Subtotal</span><span>${isFree ? "Free" : fmtINR(orig || total)}</span></div>
+  ${disc > 0 ? `<div><span>Discount</span><span>− ${fmtINR(disc)}</span></div>` : ""}
+  <div class="total"><span>Total</span><span>${isFree ? "Free" : fmtINR(total)}</span></div>
+</div>
+<div class="foot">Thank you for your purchase. This is a computer-generated invoice and needs no signature.<br>
+${escHtml(siteName)}${settings && settings.tagline ? " — " + escHtml(settings.tagline) : ""}</div>
+</div></body></html>`;
+}
 
 /* ============================================================
    FILE UPLOADS
@@ -1105,8 +1270,7 @@ app.get("/api/exams", async (req, res) => {
   res.set("X-Robots-Tag", "noindex");
   try {
     const snap = await examsCol.orderBy("order").get();
-    const exams = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-    res.json(exams);
+    res.json(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "DB error" });
@@ -1117,13 +1281,14 @@ app.get("/api/materials", async (req, res) => {
   res.set("X-Robots-Tag", "noindex");
   try {
     const snap = await materialsCol.orderBy("createdAt", "desc").get();
-    const list = snap.docs.map((doc) => {
-      const m = { id: doc.id, ...doc.data() };
-      delete m.privateFileUrl;
-      delete m.buyUrl;
-      return m;
-    });
-    res.json(list);
+    res.json(
+      snap.docs.map((doc) => {
+        const m = { id: doc.id, ...doc.data() };
+        delete m.privateFileUrl;
+        delete m.buyUrl;
+        return m;
+      }),
+    );
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "DB error" });
@@ -1145,12 +1310,13 @@ app.get("/api/material/:id", async (req, res) => {
   }
 });
 
-app.get("/api/settings", async (req, res) => {
+app.get("/api/settings", async (_req, res) => {
   res.set("X-Robots-Tag", "noindex");
   try {
     const s = (await getSettings()) || {};
     const safe = { ...s };
     delete safe.adminPassword;
+    delete safe.razorpay;
     if (Array.isArray(safe.adminUsers)) {
       safe.adminUsers = safe.adminUsers.map((u) => ({
         id: u.id,
@@ -1160,6 +1326,8 @@ app.get("/api/settings", async (req, res) => {
       }));
     }
     safe.paymentsEnabled = PAYMENTS_ENABLED;
+    safe.razorpay = { enabled: PAYMENTS_ENABLED };
+    res.set("Cache-Control", "no-store");
     res.json(safe);
   } catch (e) {
     console.error(e);
@@ -1207,15 +1375,13 @@ app.post(
         return res
           .status(400)
           .json({ valid: false, message: "This material is free" });
-
       const normalCode = String(code).trim().toUpperCase();
       const couponSnap = await couponsCol
         .where("code", "==", normalCode)
         .limit(1)
         .get();
       const coupon = couponSnap.empty ? null : couponSnap.docs[0].data();
-      const result = applyCoupon(coupon, mat.price);
-      res.json(result);
+      res.json(applyCoupon(coupon, mat.price));
     } catch (e) {
       console.error(e);
       res.status(500).json({ valid: false, message: "DB error" });
@@ -1236,7 +1402,6 @@ function applyCoupon(coupon, price) {
       valid: false,
       message: "Minimum order ₹" + coupon.minOrder + " required",
     };
-
   let discount = 0;
   if (coupon.type === "percent")
     discount = Math.round((price * coupon.value) / 100);
@@ -1245,7 +1410,6 @@ function applyCoupon(coupon, price) {
     discount = coupon.maxDiscount;
   if (discount > price) discount = price;
   const finalPrice = price - discount;
-
   return {
     valid: true,
     code: coupon.code,
@@ -1265,6 +1429,7 @@ function applyCoupon(coupon, price) {
 ============================================================ */
 app.post(
   "/api/free/register",
+  optionalCustomer,
   rateLimit(60000, 20, (r) => r.ip),
   async (req, res) => {
     try {
@@ -1279,15 +1444,12 @@ app.post(
         return res
           .status(400)
           .json({ error: "This material is not available" });
-
       const clean = validateCustomer(customer);
       if (!clean.ok) return res.status(400).json({ error: clean.error });
-
       const token = crypto.randomBytes(24).toString("hex");
       const expiresAt = Date.now() + 60 * 60 * 1000;
       const orderId =
         "free_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
-
       await tokensCol.doc(token).set({
         token,
         orderId,
@@ -1306,10 +1468,11 @@ app.post(
         finalAmount: 0,
         couponCode: "",
         customer: clean.customer,
+        customerId: req.customer ? req.customer.userId : null,
         status: "free",
+        downloadToken: token,
         createdAt: new Date().toISOString(),
       });
-
       res.json({ ok: true, downloadUrl: "/api/download/" + token, expiresAt });
     } catch (e) {
       console.error(e);
@@ -1323,6 +1486,7 @@ app.post(
 ============================================================ */
 app.post(
   "/api/pay/order",
+  optionalCustomer,
   rateLimit(60000, 10, (r) => r.ip),
   async (req, res) => {
     if (!razorpay)
@@ -1339,10 +1503,8 @@ app.post(
         return res
           .status(400)
           .json({ error: "This material is not available" });
-
       const clean = validateCustomer(customer);
       if (!clean.ok) return res.status(400).json({ error: clean.error });
-
       let discount = 0,
         finalAmount = mat.price,
         appliedCoupon = null;
@@ -1358,10 +1520,8 @@ app.post(
         finalAmount = r.finalPrice;
         appliedCoupon = r.code;
       }
-
       if (finalAmount < 1)
         return res.status(400).json({ error: "Final amount too small." });
-
       const order = await razorpay.orders.create({
         amount: finalAmount * 100,
         currency: "INR",
@@ -1372,7 +1532,6 @@ app.post(
           coupon: appliedCoupon || "",
         },
       });
-
       await ordersCol.doc(order.id).set({
         orderId: order.id,
         materialId,
@@ -1382,10 +1541,10 @@ app.post(
         finalAmount,
         couponCode: appliedCoupon,
         customer: clean.customer,
+        customerId: req.customer ? req.customer.userId : null,
         status: "created",
         createdAt: new Date().toISOString(),
       });
-
       res.json({
         orderId: order.id,
         amount: order.amount,
@@ -1411,7 +1570,6 @@ function validateCustomer(c) {
     .trim()
     .toLowerCase();
   const phone = String(c.phone || "").trim();
-
   if (name.length < 2 || name.length > 60)
     return {
       ok: false,
@@ -1425,14 +1583,12 @@ function validateCustomer(c) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return { ok: false, error: "Please enter a valid email address" };
   if (email.length > 120) return { ok: false, error: "Email is too long" };
-
   const digits = phone.replace(/[^\d+]/g, "");
   const plain = digits.replace(/^\+/, "");
   if (plain.length < 10 || plain.length > 15)
     return { ok: false, error: "Phone must be 10–15 digits" };
   if (!/^\d+$/.test(plain))
     return { ok: false, error: "Phone can only contain digits" };
-
   return { ok: true, customer: { name, email, phone: digits } };
 }
 
@@ -1449,38 +1605,32 @@ app.post(
       const { orderId, paymentId, signature } = req.body || {};
       if (!orderId || !paymentId || !signature)
         return res.status(400).json({ error: "Missing payment details" });
-
       const orderDoc = await ordersCol.doc(orderId).get();
       if (!orderDoc.exists)
         return res.status(404).json({ error: "Order not found" });
       const order = orderDoc.data();
-
       const expected = crypto
         .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
         .update(orderId + "|" + paymentId)
         .digest("hex");
-
       if (expected !== signature) {
         await ordersCol
           .doc(orderId)
           .update({ status: "failed", failedReason: "Signature mismatch" });
         return res.status(400).json({ error: "Payment verification failed" });
       }
-
       if (order.status === "paid" && order.downloadToken) {
         const tDoc = await tokensCol.doc(order.downloadToken).get();
         if (tDoc.exists) {
           const t = tDoc.data();
-          if (t.expiresAt > Date.now()) {
+          if (t.expiresAt > Date.now())
             return res.json({
               ok: true,
               downloadUrl: "/api/download/" + order.downloadToken,
               expiresAt: t.expiresAt,
             });
-          }
         }
       }
-
       if (order.couponCode) {
         const couponSnap = await couponsCol
           .where("code", "==", order.couponCode)
@@ -1493,7 +1643,6 @@ app.post(
             .update({ uses: (cDoc.data().uses || 0) + 1 });
         }
       }
-
       const token = crypto.randomBytes(24).toString("hex");
       const expiresAt = Date.now() + 60 * 60 * 1000;
       await tokensCol.doc(token).set({
@@ -1504,14 +1653,12 @@ app.post(
         expiresAt,
         downloads: 0,
       });
-
       await ordersCol.doc(orderId).update({
         status: "paid",
         paymentId,
         paidAt: new Date().toISOString(),
         downloadToken: token,
       });
-
       res.json({ ok: true, downloadUrl: "/api/download/" + token, expiresAt });
     } catch (e) {
       console.error(e);
@@ -1531,25 +1678,14 @@ app.get("/api/download/:token", async (req, res) => {
     const t = tDoc.data();
     if (t.expiresAt < Date.now())
       return res.status(410).send("This download link has expired");
-
     const mDoc = await materialsCol.doc(t.materialId).get();
     if (!mDoc.exists) return res.status(404).send("Material not found");
     const m = mDoc.data();
-
-    console.log("─── Download request ───");
-    console.log("Material ID:   ", t.materialId);
-    console.log("Title:         ", m.title);
-    console.log("Free item:     ", !!t.free);
-    console.log("fileUrl:       ", m.fileUrl || "(empty)");
-    console.log("privateFileUrl:", m.privateFileUrl || "(empty)");
-
     const candidates = [];
     if (m.privateFileUrl) candidates.push(m.privateFileUrl);
     if (m.fileUrl && m.fileUrl !== m.privateFileUrl) candidates.push(m.fileUrl);
-
-    let filePath = null;
-    let externalUrl = null;
-
+    let filePath = null,
+      externalUrl = null;
     for (const url of candidates) {
       if (/^https?:\/\//i.test(url)) {
         externalUrl = externalUrl || url;
@@ -1557,12 +1693,10 @@ app.get("/api/download/:token", async (req, res) => {
       }
       const base = path.basename(String(url).split("?")[0]);
       if (!base) continue;
-
-      const tryPaths = [
+      for (const p of [
         path.join(PRIVATE_UPLOAD, base),
         path.join(PUBLIC_UPLOAD, base),
-      ];
-      for (const p of tryPaths) {
+      ]) {
         if (fs.existsSync(p)) {
           const stat = fs.statSync(p);
           if (stat.isFile()) {
@@ -1573,29 +1707,23 @@ app.get("/api/download/:token", async (req, res) => {
       }
       if (filePath) break;
     }
-
     if (!filePath && externalUrl) {
       await tokensCol
         .doc(req.params.token)
         .update({ downloads: (t.downloads || 0) + 1 });
       return res.redirect(externalUrl);
     }
-
     if (!filePath) {
-      console.error("✗ File NOT found for any of these URLs:", candidates);
       return res
         .status(404)
         .send(
-          "The file for this product has not been uploaded yet. " +
-            "Please contact support with your order ID: " +
+          "The file for this product has not been uploaded yet. Please contact support with your order ID: " +
             t.orderId,
         );
     }
-
     await tokensCol
       .doc(req.params.token)
       .update({ downloads: (t.downloads || 0) + 1 });
-
     const safeName =
       (m.title || "prepshelf")
         .replace(/[^\w\s.-]/g, "")
@@ -1616,20 +1744,43 @@ app.get("/api/download/:token", async (req, res) => {
 /* ============================================================
    ADMIN API
 ============================================================ */
-app.get("/api/admin/all", auth, async (req, res) => {
+app.get("/api/admin/all", auth, async (_req, res) => {
   try {
-    const [examsSnap, materialsSnap, leadsSnap, couponsSnap, settings] =
-      await Promise.all([
-        examsCol.orderBy("order").get(),
-        materialsCol.orderBy("createdAt", "desc").get(),
-        leadsCol.orderBy("createdAt", "desc").get(),
-        couponsCol.orderBy("createdAt", "desc").get(),
-        getSettings(),
-      ]);
+    const [
+      examsSnap,
+      materialsSnap,
+      leadsSnap,
+      couponsSnap,
+      customersSnap,
+      settings,
+    ] = await Promise.all([
+      examsCol.orderBy("order").get(),
+      materialsCol.orderBy("createdAt", "desc").get(),
+      leadsCol.orderBy("createdAt", "desc").get(),
+      couponsCol.orderBy("createdAt", "desc").get(),
+      customersCol.get(),
+      getSettings(),
+    ]);
     const clean = (snap) =>
       snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const customers = customersSnap.docs
+      .map((doc) => {
+        const u = doc.data();
+        return {
+          id: doc.id,
+          name: u.name || "",
+          email: u.email || "",
+          provider: u.googleId ? "google" : "password",
+          createdAt: u.createdAt || "",
+          lastLoginAt: u.lastLoginAt || "",
+        };
+      })
+      .sort((a, b) =>
+        String(b.createdAt || "").localeCompare(String(a.createdAt || "")),
+      );
     const safeSettings = settings ? { ...settings } : {};
     delete safeSettings.adminPassword;
+    delete safeSettings.razorpay;
     if (Array.isArray(safeSettings.adminUsers)) {
       safeSettings.adminUsers = safeSettings.adminUsers.map((u) => ({
         id: u.id,
@@ -1638,13 +1789,51 @@ app.get("/api/admin/all", auth, async (req, res) => {
         createdAt: u.createdAt,
       }));
     }
+    safeSettings.razorpay = { enabled: PAYMENTS_ENABLED };
     res.json({
       exams: clean(examsSnap),
       materials: clean(materialsSnap),
       leads: clean(leadsSnap),
       coupons: clean(couponsSnap),
+      customers,
       settings: safeSettings,
+      paymentsEnabled: PAYMENTS_ENABLED,
     });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+app.get("/api/admin/customers", auth, async (_req, res) => {
+  try {
+    const snap = await customersCol.get();
+    const rows = snap.docs
+      .map((doc) => {
+        const u = doc.data();
+        return {
+          id: doc.id,
+          name: u.name || "",
+          email: u.email || "",
+          provider: u.googleId ? "google" : "password",
+          createdAt: u.createdAt || "",
+          lastLoginAt: u.lastLoginAt || "",
+        };
+      })
+      .sort((a, b) =>
+        String(b.createdAt || "").localeCompare(String(a.createdAt || "")),
+      );
+    res.json(rows);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
+app.get("/api/admin/customers/:id/orders", auth, async (req, res) => {
+  try {
+    const snap = await ordersCol.where("customerId", "==", req.params.id).get();
+    res.json(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "DB error" });
@@ -1734,6 +1923,7 @@ app.put("/api/settings", auth, async (req, res) => {
     const merged = await saveSettings(patch);
     const safe = { ...merged };
     delete safe.adminPassword;
+    delete safe.razorpay;
     if (Array.isArray(safe.adminUsers)) {
       safe.adminUsers = safe.adminUsers.map((u) => ({
         id: u.id,
@@ -1742,6 +1932,7 @@ app.put("/api/settings", auth, async (req, res) => {
         createdAt: u.createdAt,
       }));
     }
+    safe.razorpay = { enabled: PAYMENTS_ENABLED };
     res.json(safe);
   } catch (e) {
     console.error(e);
@@ -1749,7 +1940,7 @@ app.put("/api/settings", auth, async (req, res) => {
   }
 });
 
-app.get("/api/leads", auth, async (req, res) => {
+app.get("/api/leads", auth, async (_req, res) => {
   try {
     const snap = await leadsCol.orderBy("createdAt", "desc").get();
     res.json(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
@@ -1769,7 +1960,7 @@ app.delete("/api/leads/:id", auth, async (req, res) => {
   }
 });
 
-app.delete("/api/leads", auth, async (req, res) => {
+app.delete("/api/leads", auth, async (_req, res) => {
   try {
     const snap = await leadsCol.get();
     const batch = db.batch();
@@ -1782,7 +1973,7 @@ app.delete("/api/leads", auth, async (req, res) => {
   }
 });
 
-app.get("/api/coupons", auth, async (req, res) => {
+app.get("/api/coupons", auth, async (_req, res) => {
   try {
     const snap = await couponsCol.orderBy("createdAt", "desc").get();
     res.json(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
@@ -1827,7 +2018,7 @@ app.delete("/api/coupons/:id", auth, async (req, res) => {
   }
 });
 
-app.get("/api/payments", auth, async (req, res) => {
+app.get("/api/payments", auth, async (_req, res) => {
   try {
     const snap = await ordersCol.orderBy("createdAt", "desc").get();
     res.json(snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
@@ -1873,7 +2064,7 @@ app.delete("/api/orders/:id", auth, async (req, res) => {
   }
 });
 
-app.get("/api/export", auth, async (req, res) => {
+app.get("/api/export", auth, async (_req, res) => {
   try {
     const [
       examsSnap,
@@ -1882,6 +2073,7 @@ app.get("/api/export", auth, async (req, res) => {
       couponsSnap,
       settings,
       ordersSnap,
+      customersSnap,
     ] = await Promise.all([
       examsCol.get(),
       materialsCol.get(),
@@ -1889,11 +2081,13 @@ app.get("/api/export", auth, async (req, res) => {
       couponsCol.get(),
       getSettings(),
       ordersCol.get(),
+      customersCol.get(),
     ]);
     const clean = (snap) =>
       snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     const safe = settings ? { ...settings } : {};
     delete safe.adminPassword;
+    delete safe.razorpay;
     if (Array.isArray(safe.adminUsers)) {
       safe.adminUsers = safe.adminUsers.map((u) => ({
         id: u.id,
@@ -1908,6 +2102,17 @@ app.get("/api/export", auth, async (req, res) => {
       leads: clean(leadsSnap),
       coupons: clean(couponsSnap),
       orders: clean(ordersSnap),
+      customers: customersSnap.docs.map((doc) => {
+        const u = doc.data();
+        return {
+          id: doc.id,
+          name: u.name,
+          email: u.email,
+          createdAt: u.createdAt,
+          lastLoginAt: u.lastLoginAt,
+          googleId: u.googleId || "",
+        };
+      }),
       settings: safe,
     });
   } catch (e) {
@@ -1953,7 +2158,7 @@ app.post("/api/import", auth, async (req, res) => {
   }
 });
 
-app.post("/api/reset", auth, async (req, res) => {
+app.post("/api/reset", auth, async (_req, res) => {
   try {
     const cols = [
       examsCol,
@@ -1982,8 +2187,8 @@ app.post("/api/reset", auth, async (req, res) => {
    STATIC
 ============================================================ */
 app.use("/admin", express.static(path.join(__dirname, "admin")));
-app.get("/admin", (req, res) => res.redirect("/admin/admin.html"));
-app.get("/admin/", (req, res) => res.redirect("/admin/admin.html"));
+app.get("/admin", (_req, res) => res.redirect("/admin/admin.html"));
+app.get("/admin/", (_req, res) => res.redirect("/admin/admin.html"));
 
 app.use(
   "/uploads",
@@ -1994,7 +2199,7 @@ app.use(
 
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/robots.txt", (req, res) => {
+app.get("/robots.txt", (_req, res) => {
   res.type("text/plain").send(
     `User-agent: *
 Allow: /
@@ -2015,7 +2220,7 @@ app.get("*", (req, res, next) => {
 });
 
 /* ============================================================
-  START
+   START
 ============================================================ */
 module.exports = app;
 
